@@ -1,0 +1,19 @@
+<configuration>
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>
+				%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+	
+	<logger name="eu.deib.polimi.configuration.Config" level="INFO" />
+	<logger name="org.apache.jena.riot.stream.StreamManager" level="ERROR" />
+	<logger name="com.hp.hpl.jena.shared.LockMRSW" level="ERROR" />
+
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+	</root>
+
+</configuration>

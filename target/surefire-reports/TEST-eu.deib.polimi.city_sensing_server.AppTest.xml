@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite failures="0" time="0.011" errors="0" skipped="0" tests="1" name="eu.deib.polimi.city_sensing_server.AppTest">
+  <properties>
+    <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
+    <property name="sun.boot.library.path" value="/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib"/>
+    <property name="java.vm.version" value="23.21-b01"/>
+    <property name="user.country.format" value="IT"/>
+    <property name="gopherProxySet" value="false"/>
+    <property name="java.vm.vendor" value="Oracle Corporation"/>
+    <property name="java.vendor.url" value="http://java.oracle.com/"/>
+    <property name="path.separator" value=":"/>
+    <property name="java.vm.name" value="Java HotSpot(TM) 64-Bit Server VM"/>
+    <property name="file.encoding.pkg" value="sun.io"/>
+    <property name="user.country" value="US"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.os.patch.level" value="unknown"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="user.dir" value="/Users/baldo/Documents/workspace/city_sensing_server"/>
+    <property name="java.runtime.version" value="1.7.0_21-b12"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.CGraphicsEnvironment"/>
+    <property name="basedir" value="/Users/baldo/Documents/workspace/city_sensing_server"/>
+    <property name="java.endorsed.dirs" value="/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/endorsed"/>
+    <property name="os.arch" value="x86_64"/>
+    <property name="surefire.real.class.path" value="/Users/baldo/Documents/workspace/city_sensing_server/target/surefire/surefirebooter1403543636254942193.jar"/>
+    <property name="java.io.tmpdir" value="/var/folders/pz/lqc9ypjs7fjb03625k51qm600000gp/T/"/>
+    <property name="line.separator" value="
+"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="os.name" value="Mac OS X"/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.library.path" value="/Users/baldo/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:."/>
+    <property name="surefire.test.class.path" value="/Users/baldo/Documents/workspace/city_sensing_server/target/test-classes:/Users/baldo/Documents/workspace/city_sensing_server/target/classes:/Users/baldo/.m2/repository/org/restlet/jse/org.restlet/2.1.2/org.restlet-2.1.2.jar:/Users/baldo/.m2/repository/org/restlet/jse/org.restlet.ext.simple/2.1.2/org.restlet.ext.simple-2.1.2.jar:/Users/baldo/.m2/repository/org/simpleframework/simple/4.1.21/simple-4.1.21.jar:/Users/baldo/.m2/repository/org/restlet/jse/org.restlet.ext.ssl/2.1.2/org.restlet.ext.ssl-2.1.2.jar:/Users/baldo/.m2/repository/org/jsslutils/jsslutils/1.0.5/jsslutils-1.0.5.jar:/Users/baldo/.m2/repository/org/slf4j/log4j-over-slf4j/1.7.5/log4j-over-slf4j-1.7.5.jar:/Users/baldo/.m2/repository/ch/qos/logback/logback-classic/1.0.13/logback-classic-1.0.13.jar:/Users/baldo/.m2/repository/org/slf4j/slf4j-api/1.7.5/slf4j-api-1.7.5.jar:/Users/baldo/.m2/repository/ch/qos/logback/logback-core/1.0.13/logback-core-1.0.13.jar:/Users/baldo/.m2/repository/commons-configuration/commons-configuration/1.9/commons-configuration-1.9.jar:/Users/baldo/.m2/repository/commons-lang/commons-lang/2.6/commons-lang-2.6.jar:/Users/baldo/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar:/Users/baldo/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:/Users/baldo/.m2/repository/org/apache/jena/jena-core/2.10.1/jena-core-2.10.1.jar:/Users/baldo/.m2/repository/xerces/xercesImpl/2.11.0/xercesImpl-2.11.0.jar:/Users/baldo/.m2/repository/xml-apis/xml-apis/1.4.01/xml-apis-1.4.01.jar:/Users/baldo/.m2/repository/org/slf4j/slf4j-log4j12/1.6.4/slf4j-log4j12-1.6.4.jar:/Users/baldo/.m2/repository/log4j/log4j/1.2.16/log4j-1.2.16.jar:/Users/baldo/.m2/repository/com/cybozu/labs/langdetect/1.1-20120112/langdetect-1.1-20120112.jar:/Users/baldo/.m2/repository/net/arnx/jsonic/1.3.0/jsonic-1.3.0.jar:/Users/baldo/.m2/repository/org/apache/jena/jena-arq/2.10.1/jena-arq-2.10.1.jar:/Users/baldo/.m2/repository/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3.jar:/Users/baldo/.m2/repository/org/apache/httpcomponents/httpcore/4.2.2/httpcore-4.2.2.jar:/Users/baldo/.m2/repository/commons-codec/commons-codec/1.6/commons-codec-1.6.jar:/Users/baldo/.m2/repository/org/slf4j/jcl-over-slf4j/1.6.4/jcl-over-slf4j-1.6.4.jar:/Users/baldo/.m2/repository/org/apache/jena/jena-iri/0.9.6/jena-iri-0.9.6.jar:/Users/baldo/.m2/repository/mysql/mysql-connector-java/5.1.25/mysql-connector-java-5.1.25.jar:/Users/baldo/.m2/repository/com/google/code/gson/gson/2.2.4/gson-2.2.4.jar:"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.class.version" value="51.0"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="os.version" value="10.8.3"/>
+    <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
+    <property name="user.home" value="/Users/baldo"/>
+    <property name="user.timezone" value=""/>
+    <property name="java.awt.printerjob" value="sun.lwawt.macosx.CPrinterJob"/>
+    <property name="java.specification.version" value="1.7"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="user.name" value="baldo"/>
+    <property name="java.class.path" value="/Users/baldo/Documents/workspace/city_sensing_server/target/test-classes:/Users/baldo/Documents/workspace/city_sensing_server/target/classes:/Users/baldo/.m2/repository/org/restlet/jse/org.restlet/2.1.2/org.restlet-2.1.2.jar:/Users/baldo/.m2/repository/org/restlet/jse/org.restlet.ext.simple/2.1.2/org.restlet.ext.simple-2.1.2.jar:/Users/baldo/.m2/repository/org/simpleframework/simple/4.1.21/simple-4.1.21.jar:/Users/baldo/.m2/repository/org/restlet/jse/org.restlet.ext.ssl/2.1.2/org.restlet.ext.ssl-2.1.2.jar:/Users/baldo/.m2/repository/org/jsslutils/jsslutils/1.0.5/jsslutils-1.0.5.jar:/Users/baldo/.m2/repository/org/slf4j/log4j-over-slf4j/1.7.5/log4j-over-slf4j-1.7.5.jar:/Users/baldo/.m2/repository/ch/qos/logback/logback-classic/1.0.13/logback-classic-1.0.13.jar:/Users/baldo/.m2/repository/org/slf4j/slf4j-api/1.7.5/slf4j-api-1.7.5.jar:/Users/baldo/.m2/repository/ch/qos/logback/logback-core/1.0.13/logback-core-1.0.13.jar:/Users/baldo/.m2/repository/commons-configuration/commons-configuration/1.9/commons-configuration-1.9.jar:/Users/baldo/.m2/repository/commons-lang/commons-lang/2.6/commons-lang-2.6.jar:/Users/baldo/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar:/Users/baldo/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:/Users/baldo/.m2/repository/org/apache/jena/jena-core/2.10.1/jena-core-2.10.1.jar:/Users/baldo/.m2/repository/xerces/xercesImpl/2.11.0/xercesImpl-2.11.0.jar:/Users/baldo/.m2/repository/xml-apis/xml-apis/1.4.01/xml-apis-1.4.01.jar:/Users/baldo/.m2/repository/org/slf4j/slf4j-log4j12/1.6.4/slf4j-log4j12-1.6.4.jar:/Users/baldo/.m2/repository/log4j/log4j/1.2.16/log4j-1.2.16.jar:/Users/baldo/.m2/repository/com/cybozu/labs/langdetect/1.1-20120112/langdetect-1.1-20120112.jar:/Users/baldo/.m2/repository/net/arnx/jsonic/1.3.0/jsonic-1.3.0.jar:/Users/baldo/.m2/repository/org/apache/jena/jena-arq/2.10.1/jena-arq-2.10.1.jar:/Users/baldo/.m2/repository/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3.jar:/Users/baldo/.m2/repository/org/apache/httpcomponents/httpcore/4.2.2/httpcore-4.2.2.jar:/Users/baldo/.m2/repository/commons-codec/commons-codec/1.6/commons-codec-1.6.jar:/Users/baldo/.m2/repository/org/slf4j/jcl-over-slf4j/1.6.4/jcl-over-slf4j-1.6.4.jar:/Users/baldo/.m2/repository/org/apache/jena/jena-iri/0.9.6/jena-iri-0.9.6.jar:/Users/baldo/.m2/repository/mysql/mysql-connector-java/5.1.25/mysql-connector-java-5.1.25.jar:/Users/baldo/.m2/repository/com/google/code/gson/gson/2.2.4/gson-2.2.4.jar:"/>
+    <property name="java.vm.specification.version" value="1.7"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.home" value="/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre"/>
+    <property name="sun.java.command" value="/Users/baldo/Documents/workspace/city_sensing_server/target/surefire/surefirebooter1403543636254942193.jar /Users/baldo/Documents/workspace/city_sensing_server/target/surefire/surefire4907873955599936765tmp /Users/baldo/Documents/workspace/city_sensing_server/target/surefire/surefire5558056699647981311tmp"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="user.language" value="en"/>
+    <property name="user.language.format" value="it"/>
+    <property name="awt.toolkit" value="sun.lwawt.macosx.LWCToolkit"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.version" value="1.7.0_21"/>
+    <property name="java.ext.dirs" value="/Users/baldo/Library/Java/Extensions:/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/ext:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java"/>
+    <property name="sun.boot.class.path" value="/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/sunrsasign.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/JObjC.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/classes"/>
+    <property name="java.vendor" value="Oracle Corporation"/>
+    <property name="localRepository" value="/Users/baldo/.m2/repository"/>
+    <property name="file.separator" value="/"/>
+    <property name="java.vendor.url.bug" value="http://bugreport.sun.com/bugreport/"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeBig"/>
+    <property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
+    <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
+    <property name="sun.cpu.isalist" value=""/>
+  </properties>
+  <testcase time="0.001" classname="eu.deib.polimi.city_sensing_server.AppTest" name="testApp"/>
+</testsuite>
