@@ -29,7 +29,7 @@ public class FocusTimelineDataServer extends ServerResource{
 
 	private Logger logger = LoggerFactory.getLogger(FocusTimelineDataServer.class.getName());
 
-	@SuppressWarnings({ "unchecked", "rawtypes", "null" })
+	@SuppressWarnings({ "unchecked", "rawtypes"})
 	@Post
 	public void dataServer(Representation rep) throws IOException {
 
@@ -181,21 +181,21 @@ public class FocusTimelineDataServer extends ServerResource{
 
 		} finally {
 			try {
-				if(resultSet != null || !resultSet.isClosed()){
+				if(resultSet != null && !resultSet.isClosed()){
 					resultSet.close();
 				}
 			} catch (SQLException e) {
 				logger.error("Error while closing resultset", e);
 			}
 			try {
-				if(statement != null || !statement.isClosed()){
+				if(statement != null && !statement.isClosed()){
 					statement.close();
 				}
 			} catch (SQLException e) {
 				logger.error("Error while closing statement", e);
 			}
 			try {
-				if(connection != null || !connection.isClosed()){
+				if(connection != null && !connection.isClosed()){
 					connection.close();
 				}
 			} catch (SQLException e) {

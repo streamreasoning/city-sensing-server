@@ -1,4 +1,4 @@
-package eu.deib.polimi.city_sensing_server.side_panel;
+package eu.deib.polimi.city_sensing_server.event;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -25,11 +25,11 @@ import com.google.gson.stream.MalformedJsonException;
 
 import eu.deib.polimi.city_sensing_server.configuration.Config;
 
-public class SidePanelDataServer extends ServerResource{
+public class EventListDataServer extends ServerResource{
 
-	private Logger logger = LoggerFactory.getLogger(SidePanelDataServer.class.getName());
+	private Logger logger = LoggerFactory.getLogger(EventListDataServer.class.getName());
 
-	@SuppressWarnings({ "unchecked", "rawtypes"})
+	@SuppressWarnings({ "unchecked", "rawtypes", "null" })
 	@Post
 	public void dataServer(Representation rep) throws IOException {
 
@@ -37,6 +37,8 @@ public class SidePanelDataServer extends ServerResource{
 		Connection connection = null;
 		Statement statement = null;
 		ResultSet resultSet = null;
+		ResultSet innerResultSet = null;
+
 		
 		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get("org.restlet.http.headers");
 		if (responseHeaders == null) {
@@ -51,31 +53,31 @@ public class SidePanelDataServer extends ServerResource{
 
 			reader = new JsonReader(new StringReader(rep.getText()));
 
-			SidePanelRequest spReq = gson.fromJson(reader, SidePanelRequest.class);
+			EventListRequest mReq = gson.fromJson(reader, EventListRequest.class);
 
 			String cellList = new String();
 			
-			if(spReq.getStart() == null || Long.parseLong(spReq.getStart()) < 0){
-				spReq.setStart("1365199200000");
+			if(mReq.getStart() == null || Long.parseLong(mReq.getStart()) < 0){
+				mReq.setStart("1365199200000");
 			}
-			if(spReq.getEnd() == null || Long.parseLong(spReq.getEnd()) < 0){
-				spReq.setEnd("1366927200000");
+			if(mReq.getEnd() == null || Long.parseLong(mReq.getEnd()) < 0){
+				mReq.setEnd("1366927200000");
 			}
-			if(spReq.getCells() == null || spReq.getCells().size() == 0){
+			if(mReq.getCells() == null || mReq.getCells().size() == 0){
 				for(int i = 1 ; i < 10000 ; i++)
 					cellList = cellList + i + ",";
 			} else {
-				for(String s : spReq.getCells())
+				for(String s : mReq.getCells())
 					cellList = cellList + s + ",";
 			}
 
 			cellList = cellList.substring(0, cellList.length() - 1);
 
-			String sqlQuery = "SELECT outcoming_call_number,incoming_call_number,outcoming_sms_number,incoming_sms_number,data_cdr_number,hashtag,n_occurrences " +
-					"FROM INFO_ABOUT_SQUARE_BY_TS, HASHTAG_SQUARE " +
-					"WHERE square_ID IN (" + cellList + ") AND ts_ID >= " + spReq.getStart() + " AND ts_ID <= " + spReq.getEnd() + " " +
-					"AND INFO_ABOUT_SQUARE_BY_TS.square_ID = HASHTAG_SQUARE.ht_square_ID AND INFO_ABOUT_SQUARE_BY_TS.ts_ID = HASHTAG_SQUARE.ht_ts_ID";
-			
+			String sqlQuery = "SELECT EVENT.event_ID, EVENT.name, EVENT.address, EVENT.start_date, EVENT.end_date, EVENT.link, VENUE.venue_ID " +
+					"FROM EVENT,VENUE " +
+					"WHERE event_venue_ID = venue_ID AND ( start_date >= " + mReq.getStart() + " OR end_date <= " + mReq.getEnd() + " ) AND " +
+					"venue_square_ID IN  (" + cellList + ") ";
+
 			Class.forName("com.mysql.jdbc.Driver");
 
 			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
@@ -85,41 +87,64 @@ public class SidePanelDataServer extends ServerResource{
 			resultSet = statement.executeQuery(sqlQuery);
 
 			boolean next = resultSet.next();
-			
-			SidePanelResponse response = new SidePanelResponse();
-			SidePanelHashtag hashtag;
-			ArrayList<SidePanelHashtag> hashtagList = new ArrayList<SidePanelHashtag>();
-			
-			double totalOutcomingCalls = 0;
-			double totalIncomingCalls = 0;
-			double totalOutcomingSMS = 0;
-			double totalIncomingSMS = 0;
-			double totalDataCdr = 0;
+			boolean innerNext;
+
+
+			EventListResponse response = new EventListResponse();
+			Event event;
+			ArrayList<Long> dateList;
+			ArrayList<Event> eventList = new ArrayList<Event>();
+			EventListCategory category;
+			ArrayList<EventListCategory> categoryList;
+			EventListVenue venue;
+
 
 			while(next){
-				hashtag = new SidePanelHashtag();
+				event = new Event();
+				dateList = new ArrayList<Long>();
+				categoryList = new ArrayList<EventListCategory>();
+				venue = new EventListVenue();
 
-				totalOutcomingCalls = totalOutcomingCalls + Double.parseDouble(resultSet.getString(1));
-				totalIncomingCalls = totalIncomingCalls + Double.parseDouble(resultSet.getString(2));
-				totalOutcomingCalls = totalOutcomingSMS + Double.parseDouble(resultSet.getString(3));
-				totalIncomingSMS = totalIncomingSMS + Double.parseDouble(resultSet.getString(4));
-				totalDataCdr = totalDataCdr + Double.parseDouble(resultSet.getString(5));
+				event.setId(Long.parseLong(resultSet.getString(1)));
+				event.setName(resultSet.getString(2));
+				event.setAddress(resultSet.getString(3));
+				dateList.add(Long.parseLong(resultSet.getString(4)));
+				dateList.add(Long.parseLong(resultSet.getString(5)));
+				event.setDate(dateList);
+				event.setLink(resultSet.getString(6));
 				
-				hashtag.setLabel(resultSet.getString(6));
-				hashtag.setValue(Long.parseLong(resultSet.getString(7)));
+				sqlQuery = "SELECT fs_cat_ID, FUORISALONE_CAT.name" +
+						"FROM VENUE_FUORISALONE, FUORISALONE_CAT " +
+						"WHERE VENUE_FUORISALONE.fs_cat_ID = FUORISALONE_CAT.fs_cat_ID AND VENUE_FUORISALONE.fs_cat_ID = " + resultSet.getString(7);
+				
+				statement = connection.createStatement();
 
-				hashtagList.add(hashtag);
-
+				innerResultSet = statement.executeQuery(sqlQuery);
+				
+				innerNext = innerResultSet.next();
+				
+				while(innerNext){
+					
+					category = new EventListCategory();
+					
+					category.setId(Long.parseLong(innerResultSet.getString(1)));
+					category.setLabel(innerResultSet.getString(2));
+					
+					categoryList.add(category);
+					
+					innerNext = innerResultSet.next();
+				}
+				
+				venue.setCategories(categoryList);
+				event.setVenues(venue);
+				
+				eventList.add(event);
+				
 				next = resultSet.next();
 
 			}
 
-			response.setCalls_out(totalOutcomingCalls);
-			response.setCalls_in(totalIncomingCalls);
-			response.setMessages_out(totalOutcomingSMS);
-			response.setMessages_in(totalIncomingSMS);
-			response.setData_traffic(totalDataCdr);
-			response.setHashtags(hashtagList);
+			response.setCells(eventList);
 					
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
@@ -152,8 +177,15 @@ public class SidePanelDataServer extends ServerResource{
 
 		} finally {
 			try {
-				if(resultSet != null && !resultSet.isClosed()){
+				if(resultSet == null && !resultSet.isClosed()){
 					resultSet.close();
+				}
+			} catch (SQLException e) {
+				logger.error("Error while closing resultset", e);
+			}
+			try {
+				if(innerResultSet != null && !innerResultSet.isClosed()){
+					innerResultSet.close();
 				}
 			} catch (SQLException e) {
 				logger.error("Error while closing resultset", e);

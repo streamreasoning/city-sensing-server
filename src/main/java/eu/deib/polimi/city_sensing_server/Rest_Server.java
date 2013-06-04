@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import eu.deib.polimi.city_sensing_server.concept_flows.ConceptFlowsDataServer;
 import eu.deib.polimi.city_sensing_server.concept_network.ConceptNetDataServer;
 import eu.deib.polimi.city_sensing_server.configuration.Config;
+import eu.deib.polimi.city_sensing_server.event.EventListDataServer;
 import eu.deib.polimi.city_sensing_server.map.MapDataServer;
 import eu.deib.polimi.city_sensing_server.side_panel.SidePanelDataServer;
 import eu.deib.polimi.city_sensing_server.timeline.ContextTimelineDataServer;
@@ -52,6 +53,7 @@ public class Rest_Server extends Application {
 		router.attach("/conceptflows",ConceptFlowsDataServer.class);
 		router.attach("/focustimeline",FocusTimelineDataServer.class);
 		router.attach("/contexttimeline",ContextTimelineDataServer.class);
+		router.attach("/eventlist",EventListDataServer.class);
 
 		return router;
 	}
