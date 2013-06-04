@@ -34,24 +34,24 @@ public class ContextTimelineDataServer extends ServerResource{
 		Connection connection = null;
 		Statement statement = null;
 		ResultSet resultSet = null;
-		
+
 		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get("org.restlet.http.headers");
 		if (responseHeaders == null) {
-		    responseHeaders = new Series(Header.class);
-		    getResponse().getAttributes().put("org.restlet.http.headers", responseHeaders);
+			responseHeaders = new Series(Header.class);
+			getResponse().getAttributes().put("org.restlet.http.headers", responseHeaders);
 		}
 		responseHeaders.add(new Header("Access-Control-Allow-Origin", "*"));
 
 		try {
 
 			JsonReader reader = null;
-			
+
 			reader = new JsonReader(new StringReader(rep.getText()));
 
 			ContextTimelineRequest cReq = gson.fromJson(reader, ContextTimelineRequest.class);
-			
+
 			String cellList = new String();
-			
+
 			if(cReq.getCells() == null || cReq.getCells().size() == 0){
 				for(int i = 1 ; i < 10000 ; i++)
 					cellList = cellList + i + ",";
@@ -59,72 +59,83 @@ public class ContextTimelineDataServer extends ServerResource{
 				for(String s : cReq.getCells())
 					cellList = cellList + s + ",";
 			}
-			
+
 			cellList = cellList.substring(0, cellList.length() - 1);
-			
-			String sqlQuery = "SELECT 3h_ts_id,SUM(anomaly_index) AS mobily_anomaly,SUM(n_tweets) AS social_activity " +
+
+			String sqlQuery = "SELECT 3h_ts_id,AVG(anomaly_index) AS mobily_anomaly,SUM(n_tweets) AS social_activity " +
 					"FROM INFO_ABOUT_SQUARE_BY_TS " +
 					"WHERE square_ID IN (" + cellList + ") " +
 					"GROUP BY INFO_ABOUT_SQUARE_BY_TS.3h_ts_id";
-						
+
 			Class.forName("com.mysql.jdbc.Driver");
-			
+
 			connection = DriverManager.getConnection("jdbc:mysql://156.54.107.76:8001/milano_city_sensing?user=mbalduini&password=mbalduini");
-			
+
 			statement = connection.createStatement();
-			
+
 			resultSet = statement.executeQuery(sqlQuery);
-			
+
 			boolean next = resultSet.next();
-			
+
 			GeneralTimelineResponse response = new GeneralTimelineResponse();
 			GeneralTimelineStep step;
 			ArrayList<GeneralTimelineStep> stepList = new ArrayList<GeneralTimelineStep>();
 
-			
-			long lastTs = 0;
-			long tsInterval = 10800000;
-			long startTS = 1365199200000L;
 
+			long tsInterval = 10800000;
+			long firstHistoricalTs = 1365199200000L;
+			long startIntervalTS = 0;
+			long lastEndIntervalTs = firstHistoricalTs;
 			
 			while(next){
-				
-//				if(Long.parseLong(resultSet.getString(1)) - lastTs != 0){
-//					
-//					lastTs = Long.parseLong(resultSet.getString(1)) + tsInterval;
-//					
-//					while(Long.parseLong(resultSet.getString(1)) - lastTs != 0){
-//						
-//						step = new GeneralTimelineStep();
-//						
-//						step.setStart(lastTs - tsInterval);
-//						step.setEnd(lastTs);
-//						step.setMobile_anomaly(Double.parseDouble(resultSet.getString(2)));
-//						step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
-//
-//						stepList.add(step);
-//						
-//					}
-//					
-//				}
-				
+
+				startIntervalTS = firstHistoricalTs + (Long.parseLong(resultSet.getString(1)) * tsInterval);
+
+				while(lastEndIntervalTs < startIntervalTS){
+
+					step = new GeneralTimelineStep();
+
+					step.setStart(lastEndIntervalTs);
+					lastEndIntervalTs = lastEndIntervalTs + tsInterval;
+					step.setEnd(lastEndIntervalTs);
+					step.setMobile_anomaly(0);
+					step.setSocial_activity(0);
+
+					stepList.add(step);
+
+				}
+
+				while(startIntervalTS - lastEndIntervalTs >= tsInterval){
+
+					step = new GeneralTimelineStep();
+
+					step.setStart(lastEndIntervalTs);
+					lastEndIntervalTs = lastEndIntervalTs + tsInterval;
+					step.setEnd(lastEndIntervalTs);
+					step.setMobile_anomaly(0);
+					step.setSocial_activity(0);
+
+					stepList.add(step);
+
+				}
+
 				step = new GeneralTimelineStep();
-				
-				lastTs = (startTS + (Long.parseLong(resultSet.getString(1)) * tsInterval)) + tsInterval;
-				step.setStart(startTS + (Long.parseLong(resultSet.getString(1)) * tsInterval));
-				step.setEnd(lastTs);
+
+				lastEndIntervalTs = startIntervalTS + tsInterval;
+				step.setStart(startIntervalTS);
+				step.setEnd(lastEndIntervalTs);
 				step.setMobile_anomaly(Double.parseDouble(resultSet.getString(2)));
 				step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
 
 
 				stepList.add(step);
-				
-				next = resultSet.next();
-				
-			}
-			
-			response.setSteps(stepList);
 
+				next = resultSet.next();
+
+			}
+
+			response.setSteps(stepList);
+		
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
 			this.getResponse().commit();

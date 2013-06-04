@@ -22,6 +22,9 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 
+import eu.deib.polimi.city_sensing_server.timeline.GeneralTimelineResponse;
+import eu.deib.polimi.city_sensing_server.timeline.GeneralTimelineStep;
+
 public class FocusTimelineDataServer extends ServerResource{
 
 	private Logger logger = LoggerFactory.getLogger(FocusTimelineDataServer.class.getName());
@@ -68,10 +71,10 @@ public class FocusTimelineDataServer extends ServerResource{
 			
 			cellList = cellList.substring(0, cellList.length() - 1);
 			
-			String sqlQuery = "SELECT ts_ID,SUM(anomaly_index) AS mobily_anomaly,SUM(n_tweets) AS social_activity " +
+			String sqlQuery = "SELECT ts_ID,AVG(anomaly_index) AS mobily_anomaly,SUM(n_tweets) AS social_activity " +
 					"FROM INFO_ABOUT_SQUARE_BY_TS " +
 					"WHERE square_ID IN (" + cellList + ") AND ts_id >= " + tReq.getStart() + " AND ts_id <= " + tReq.getEnd() + " " +
-					"GROUP BY INFO_ABOUT_SQUARE_BY_TS.ts_ID";
+					"GROUP BY ts_ID";
 						
 			Class.forName("com.mysql.jdbc.Driver");
 			
@@ -86,47 +89,73 @@ public class FocusTimelineDataServer extends ServerResource{
 			GeneralTimelineResponse response = new GeneralTimelineResponse();
 			GeneralTimelineStep step;
 			ArrayList<GeneralTimelineStep> stepList = new ArrayList<GeneralTimelineStep>();
-			
-			long lastTs = 0;
-			long tsInterval = 900000;
 
+
+			long tsInterval = 900000;
+			long startIntervalTS = 0;
+			long lastEndIntervalTs = Long.parseLong(tReq.getStart());
 			
 			while(next){
+
+				startIntervalTS = Long.parseLong(resultSet.getString(1));
 				
-//				if(Long.parseLong(resultSet.getString(1)) - lastTs != 0){
-//					
-//					lastTs = Long.parseLong(resultSet.getString(1)) + tsInterval;
-//					
-//					while(Long.parseLong(resultSet.getString(1)) - lastTs != 0){
-//						
-//						step = new GeneralTimelineStep();
-//						
-//						step.setStart(lastTs - tsInterval);
-//						step.setEnd(lastTs);
-//						step.setMobile_anomaly(Double.parseDouble(resultSet.getString(2)));
-//						step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
-//
-//						stepList.add(step);
-//						
-//					}
-//					
-//				}
-				
+				while(lastEndIntervalTs < startIntervalTS){
+
+					step = new GeneralTimelineStep();
+
+					step.setStart(lastEndIntervalTs);
+					lastEndIntervalTs = lastEndIntervalTs + tsInterval;
+					step.setEnd(lastEndIntervalTs);
+					step.setMobile_anomaly(0);
+					step.setSocial_activity(0);
+
+					stepList.add(step);
+
+				}
+
+				while(startIntervalTS - lastEndIntervalTs >= tsInterval){
+
+					step = new GeneralTimelineStep();
+
+					step.setStart(lastEndIntervalTs);
+					lastEndIntervalTs = lastEndIntervalTs + tsInterval;
+					step.setEnd(lastEndIntervalTs);
+					step.setMobile_anomaly(0);
+					step.setSocial_activity(0);
+
+					stepList.add(step);
+
+				}
+
 				step = new GeneralTimelineStep();
-				
-				lastTs = Long.parseLong(resultSet.getString(1)) + tsInterval;
-				step.setStart(Long.parseLong(resultSet.getString(1)));
-				step.setEnd(lastTs);
+
+				lastEndIntervalTs = startIntervalTS + tsInterval;
+				step.setStart(startIntervalTS);
+				step.setEnd(lastEndIntervalTs);
 				step.setMobile_anomaly(Double.parseDouble(resultSet.getString(2)));
 				step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
 
+
 				stepList.add(step);
-								
+
 				next = resultSet.next();
-								
 
 			}
 			
+			while(lastEndIntervalTs < Long.parseLong(tReq.getEnd())){
+
+				step = new GeneralTimelineStep();
+
+				step.setStart(lastEndIntervalTs);
+				lastEndIntervalTs = lastEndIntervalTs + tsInterval;
+				step.setEnd(lastEndIntervalTs);
+				step.setMobile_anomaly(0);
+				step.setSocial_activity(0);
+
+				stepList.add(step);
+
+			}
+
 			response.setSteps(stepList);
 
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
