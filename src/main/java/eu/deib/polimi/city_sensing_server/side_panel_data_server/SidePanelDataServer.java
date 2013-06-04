@@ -72,9 +72,8 @@ public class SidePanelDataServer extends ServerResource{
 			cellList = cellList.substring(0, cellList.length() - 1);
 
 			String sqlQuery = "SELECT outcoming_call_number,incoming_call_number,outcoming_sms_number,incoming_sms_number,data_cdr_number,hashtag,n_occurrences " +
-					"FROM INFO_ABOUT_SQUARE_BY_TS, TIMESTAMPS AS TS1, TIMESTAMPS AS TS2, HASHTAG_SQUARE " +
-					"WHERE square_ID IN (" + cellList + ") AND INFO_ABOUT_SQUARE_BY_TS.ts_ID = TS1.ts_id AND INFO_ABOUT_SQUARE_BY_TS.ts_ID = TS2.ts_id AND " +
-					"TS1.ts_interval_start > " + spReq.getStart() + " AND TS2.ts_interval_end < " + spReq.getEnd() + " " +
+					"FROM INFO_ABOUT_SQUARE_BY_TS, HASHTAG_SQUARE " +
+					"WHERE square_ID IN (" + cellList + ") AND ts_ID >= " + spReq.getStart() + " AND ts_ID <= " + spReq.getEnd() + " " +
 					"AND INFO_ABOUT_SQUARE_BY_TS.square_ID = HASHTAG_SQUARE.ht_square_ID AND INFO_ABOUT_SQUARE_BY_TS.ts_ID = HASHTAG_SQUARE.ht_ts_ID";
 			
 			Class.forName("com.mysql.jdbc.Driver");
@@ -97,7 +96,7 @@ public class SidePanelDataServer extends ServerResource{
 			double totalIncomingSMS = 0;
 			double totalDataCdr = 0;
 
-			do{
+			while(next){
 				hashtag = new SidePanelHashtag();
 
 				totalOutcomingCalls = totalOutcomingCalls + Double.parseDouble(resultSet.getString(1));
@@ -113,7 +112,7 @@ public class SidePanelDataServer extends ServerResource{
 
 				next = resultSet.next();
 
-			}while(next);
+			}
 
 			response.setCalls_out(totalOutcomingCalls);
 			response.setCalls_in(totalIncomingCalls);

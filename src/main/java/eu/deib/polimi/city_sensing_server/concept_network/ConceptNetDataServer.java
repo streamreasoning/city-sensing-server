@@ -81,9 +81,8 @@ public class ConceptNetDataServer extends ServerResource{
 			ArrayList<ConceptNetLink> linkList = new ArrayList<ConceptNetLink>();
 
 			String sqlQuery = "SELECT DISTINCT hashtag " +
-					"FROM HASHTAG_SQUARE,TIMESTAMPS AS TS1, TIMESTAMPS AS TS2 " +
-					"WHERE TS1.ts_ID = ht_ts_ID AND TS2.ts_ID = ht_ts_ID AND ht_square_ID in (" + cellList + ") AND " +
-					"TS1.ts_interval_start >= " + cnReq.getStart() + " AND TS2.ts_interval_end <= " + cnReq.getEnd() + " " +
+					"FROM HASHTAG_SQUARE " +
+					"WHERE ht_square_ID in (" + cellList + ") AND ht_ts_ID >= " + cnReq.getStart() + " AND ht_ts_ID <= " + cnReq.getEnd() + " " +
 					"GROUP BY hashtag";
 
 			Class.forName("com.mysql.jdbc.Driver");
@@ -96,7 +95,7 @@ public class ConceptNetDataServer extends ServerResource{
 
 			boolean next = resultSet.next();
 
-			do{
+			while(next){
 				node = new ConceptNetNode();
 
 				node.setId(resultSet.getString(1));
@@ -107,7 +106,7 @@ public class ConceptNetDataServer extends ServerResource{
 
 				next = resultSet.next();
 
-			}while(next);
+			}
 
 			if(resultSet != null || !resultSet.isClosed()){
 				try {
@@ -125,11 +124,10 @@ public class ConceptNetDataServer extends ServerResource{
 			}
 
 			sqlQuery = "SELECT HT1.hashtag,HT2.hashtag,COUNT(*) as count " +
-					"FROM HASHTAG_SQUARE as HT1, HASHTAG_SQUARE as HT2, TIMESTAMPS AS TS1, TIMESTAMPS AS TS2 " +
-					"WHERE TS1.ts_ID = HT1.ht_ts_ID AND TS2.ts_ID = HT1.ht_ts_ID AND " +
-					"TS1.ts_ID = HT2.ht_ts_ID AND TS2.ts_ID = HT2.ht_ts_ID AND " +
-					"HT1.ht_square_ID in  (" + cellList + ") AND HT2.ht_square_ID in  (" + cellList + ") AND " +
-					"TS1.ts_interval_start >= " + cnReq.getStart() + " AND TS2.ts_interval_end <= " + cnReq.getEnd() + " AND " +
+					"FROM HASHTAG_SQUARE as HT1, HASHTAG_SQUARE as HT2 " +
+					"WHERE HT1.ht_square_ID in  (" + cellList + ") AND HT2.ht_square_ID in  (" + cellList + ") AND " +
+					"HT1.ht_ts_ID >= " + cnReq.getStart() + " AND HT1.ht_ts_ID <= " + cnReq.getEnd() + " AND " +
+					"HT2.ht_ts_ID >= " + cnReq.getStart() + " AND HT2.ht_ts_ID <= " + cnReq.getEnd() + " AND " +
 					"HT1.hashtag != HT2.hashtag " +
 					"GROUP BY HT1.hashtag,HT2.hashtag " +
 					"HAVING(count > " + cnReq.getThreshold() + ") " +
@@ -141,7 +139,7 @@ public class ConceptNetDataServer extends ServerResource{
 
 			next = resultSet.next();
 
-			do{
+			while(next){
 				link = new ConceptNetLink();
 
 				link.setSource(resultSet.getString(1));
@@ -152,7 +150,7 @@ public class ConceptNetDataServer extends ServerResource{
 
 				next = resultSet.next();
 
-			}while(next);
+			}
 
 			response.setNodes(nodeList);
 			response.setLinks(linkList);

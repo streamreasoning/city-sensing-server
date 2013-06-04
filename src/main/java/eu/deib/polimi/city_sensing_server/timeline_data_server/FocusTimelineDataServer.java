@@ -68,10 +68,9 @@ public class FocusTimelineDataServer extends ServerResource{
 			
 			cellList = cellList.substring(0, cellList.length() - 1);
 			
-			String sqlQuery = "SELECT ts_interval_start, ts_interval_end,SUM(anomaly_index) AS mobily_anomaly,SUM(n_tweets) AS social_activity " +
-					"FROM INFO_ABOUT_SQUARE_BY_TS, TIMESTAMPS " +
-					"WHERE square_ID IN (" + cellList + ") AND INFO_ABOUT_SQUARE_BY_TS.ts_ID = TIMESTAMPS.ts_id AND " +
-					"ts_interval_start > " + tReq.getStart() + " AND ts_interval_end < " + tReq.getEnd() + " " +
+			String sqlQuery = "SELECT ts_ID,SUM(anomaly_index) AS mobily_anomaly,SUM(n_tweets) AS social_activity " +
+					"FROM INFO_ABOUT_SQUARE_BY_TS " +
+					"WHERE square_ID IN (" + cellList + ") AND ts_id >= " + tReq.getStart() + " AND ts_id <= " + tReq.getEnd() + " " +
 					"GROUP BY INFO_ABOUT_SQUARE_BY_TS.ts_ID";
 						
 			Class.forName("com.mysql.jdbc.Driver");
@@ -87,21 +86,46 @@ public class FocusTimelineDataServer extends ServerResource{
 			GeneralTimelineResponse response = new GeneralTimelineResponse();
 			GeneralTimelineStep step;
 			ArrayList<GeneralTimelineStep> stepList = new ArrayList<GeneralTimelineStep>();
+			
+			long lastTs = 0;
+			long tsInterval = 900000;
 
 			
-			do{
+			while(next){
+				
+//				if(Long.parseLong(resultSet.getString(1)) - lastTs != 0){
+//					
+//					lastTs = Long.parseLong(resultSet.getString(1)) + tsInterval;
+//					
+//					while(Long.parseLong(resultSet.getString(1)) - lastTs != 0){
+//						
+//						step = new GeneralTimelineStep();
+//						
+//						step.setStart(lastTs - tsInterval);
+//						step.setEnd(lastTs);
+//						step.setMobile_anomaly(Double.parseDouble(resultSet.getString(2)));
+//						step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
+//
+//						stepList.add(step);
+//						
+//					}
+//					
+//				}
+				
 				step = new GeneralTimelineStep();
 				
+				lastTs = Long.parseLong(resultSet.getString(1)) + tsInterval;
 				step.setStart(Long.parseLong(resultSet.getString(1)));
-				step.setEnd(Long.parseLong(resultSet.getString(2)));
-				step.setMobile_anomaly(Double.parseDouble(resultSet.getString(3)));
-				step.setSocial_activity(Double.parseDouble(resultSet.getString(4)));
+				step.setEnd(lastTs);
+				step.setMobile_anomaly(Double.parseDouble(resultSet.getString(2)));
+				step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
 
 				stepList.add(step);
-				
+								
 				next = resultSet.next();
-				
-			}while(next);
+								
+
+			}
 			
 			response.setSteps(stepList);
 

@@ -13,6 +13,8 @@ import eu.deib.polimi.city_sensing_server.concept_network.ConceptNetDataServer;
 import eu.deib.polimi.city_sensing_server.configuration.Config;
 import eu.deib.polimi.city_sensing_server.map_data_server.MapDataServer;
 import eu.deib.polimi.city_sensing_server.side_panel_data_server.SidePanelDataServer;
+import eu.deib.polimi.city_sensing_server.timeline_data_server.ContextTimelineDataServer;
+import eu.deib.polimi.city_sensing_server.timeline_data_server.FocusTimelineDataServer;
 
 public class Rest_Server extends Application {
 	
@@ -46,8 +48,8 @@ public class Rest_Server extends Application {
 		router.attach("/map",MapDataServer.class);
 		router.attach("/sidepanel",SidePanelDataServer.class);
 		router.attach("/conceptnetwork",ConceptNetDataServer.class);
-//		router.attach("/focustimeline",FocusTimelineDataServer.class);
-//		router.attach("/contexttimeline",ContextTimelineDataServer.class);
+		router.attach("/focustimeline",FocusTimelineDataServer.class);
+		router.attach("/contexttimeline",ContextTimelineDataServer.class);
 
 		return router;
 	}

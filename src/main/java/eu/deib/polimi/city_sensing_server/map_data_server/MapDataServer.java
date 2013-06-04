@@ -73,9 +73,8 @@ public class MapDataServer extends ServerResource{
 
 			String sqlQuery = "SELECT square_id,(SUM(incoming_call_number) + SUM(outcoming_call_number) + SUM(incoming_sms_number) + SUM(outcoming_call_number) + SUM(data_cdr_number)) AS mobily_activity, " +
 					"COUNT(anomaly_index) AS mobily_anomaly , SUM(n_tweets) AS social_activity, (SUM(positive_tweets_number) - SUM(negative_tweets_number)) AS social_sentiment " +
-					"FROM INFO_ABOUT_SQUARE_BY_TS, TIMESTAMPS AS TS1, TIMESTAMPS AS TS2 " +
-					"WHERE square_ID IN (" + cellList + ") AND INFO_ABOUT_SQUARE_BY_TS.ts_ID = TS1.ts_id AND INFO_ABOUT_SQUARE_BY_TS.ts_ID = TS2.ts_id AND " +
-					"TS1.ts_interval_start > " + mReq.getStart() + " AND TS2.ts_interval_end < " + mReq.getEnd() + " " +
+					"FROM INFO_ABOUT_SQUARE_BY_TS " +
+					"WHERE square_ID IN (" + cellList + ") AND ts_ID > " + mReq.getStart() + " AND ts_ID < " + mReq.getEnd() + " " +
 					"GROUP BY square_ID";
 
 			Class.forName("com.mysql.jdbc.Driver");
@@ -93,7 +92,7 @@ public class MapDataServer extends ServerResource{
 			ArrayList<MapCell> mapCellList = new ArrayList<MapCell>();
 
 
-			do{
+			while(next){
 				mapCell = new MapCell();
 
 				mapCell.setId(Long.parseLong(resultSet.getString(1)));
@@ -106,7 +105,7 @@ public class MapDataServer extends ServerResource{
 
 				next = resultSet.next();
 
-			}while(next);
+			}
 
 			response.setCells(mapCellList);
 					
