@@ -1,4 +1,4 @@
-package eu.deib.polimi.city_sensing_server.map_data_server;
+package eu.deib.polimi.city_sensing_server.map;
 
 import java.util.ArrayList;
 

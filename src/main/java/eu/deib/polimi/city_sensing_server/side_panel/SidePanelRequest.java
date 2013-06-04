@@ -1,13 +1,13 @@
-package eu.deib.polimi.city_sensing_server.timeline_data_server;
+package eu.deib.polimi.city_sensing_server.side_panel;
 
 import java.util.ArrayList;
 
-public class FocusTimelineRequest {
+public class SidePanelRequest {
 	
 	String start;
 	String end;
 	ArrayList<String> cells;
-
+	
 	public String getStart() {
 		return start;
 	}
@@ -26,5 +26,4 @@ public class FocusTimelineRequest {
 	public void setCells(ArrayList<String> cells) {
 		this.cells = cells;
 	}
-	
 }

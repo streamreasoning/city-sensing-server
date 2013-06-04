@@ -1,4 +1,4 @@
-package eu.deib.polimi.city_sensing_server.side_panel_data_server;
+package eu.deib.polimi.city_sensing_server.side_panel;
 
 public class SidePanelHashtag {
 	

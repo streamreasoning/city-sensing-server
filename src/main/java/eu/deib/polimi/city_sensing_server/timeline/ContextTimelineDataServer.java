@@ -1,4 +1,4 @@
-package eu.deib.polimi.city_sensing_server.timeline_data_server;
+package eu.deib.polimi.city_sensing_server.timeline;
 
 import java.io.IOException;
 import java.io.StringReader;

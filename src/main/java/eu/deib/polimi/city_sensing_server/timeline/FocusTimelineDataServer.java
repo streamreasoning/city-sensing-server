@@ -1,4 +1,4 @@
-package eu.deib.polimi.city_sensing_server.map_data_server;
+package eu.deib.polimi.city_sensing_server.timeline;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -21,13 +21,10 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.MalformedJsonException;
 
-import eu.deib.polimi.city_sensing_server.configuration.Config;
+public class FocusTimelineDataServer extends ServerResource{
 
-public class MapDataServer extends ServerResource{
-
-	private Logger logger = LoggerFactory.getLogger(MapDataServer.class.getName());
+	private Logger logger = LoggerFactory.getLogger(FocusTimelineDataServer.class.getName());
 
 	@SuppressWarnings({ "unchecked", "rawtypes", "null" })
 	@Post
@@ -48,67 +45,90 @@ public class MapDataServer extends ServerResource{
 		try {
 
 			JsonReader reader = null;
-
+			
 			reader = new JsonReader(new StringReader(rep.getText()));
 
-			MapRequest mReq = gson.fromJson(reader, MapRequest.class);
-
+			FocusTimelineRequest tReq = gson.fromJson(reader, FocusTimelineRequest.class);
+			
 			String cellList = new String();
 			
-			if(mReq.getStart() == null || Long.parseLong(mReq.getStart()) < 0){
-				mReq.setStart("1365199200000");
+			if(tReq.getStart() == null || Long.parseLong(tReq.getStart()) < 0){
+				tReq.setStart("1365199200000");
 			}
-			if(mReq.getEnd() == null || Long.parseLong(mReq.getEnd()) < 0){
-				mReq.setEnd("1366927200000");
+			if(tReq.getEnd() == null || Long.parseLong(tReq.getEnd()) < 0){
+				tReq.setEnd("1366927200000");
 			}
-			if(mReq.getCells() == null || mReq.getCells().size() == 0){
+			if(tReq.getCells() == null || tReq.getCells().size() == 0){
 				for(int i = 1 ; i < 10000 ; i++)
 					cellList = cellList + i + ",";
 			} else {
-				for(String s : mReq.getCells())
+				for(String s : tReq.getCells())
 					cellList = cellList + s + ",";
 			}
-
+			
 			cellList = cellList.substring(0, cellList.length() - 1);
-
-			String sqlQuery = "SELECT square_id,(SUM(incoming_call_number) + SUM(outcoming_call_number) + SUM(incoming_sms_number) + SUM(outcoming_call_number) + SUM(data_cdr_number)) AS mobily_activity, " +
-					"COUNT(anomaly_index) AS mobily_anomaly , SUM(n_tweets) AS social_activity, (SUM(positive_tweets_number) - SUM(negative_tweets_number)) AS social_sentiment " +
+			
+			String sqlQuery = "SELECT ts_ID,SUM(anomaly_index) AS mobily_anomaly,SUM(n_tweets) AS social_activity " +
 					"FROM INFO_ABOUT_SQUARE_BY_TS " +
-					"WHERE square_ID IN (" + cellList + ") AND ts_ID > " + mReq.getStart() + " AND ts_ID < " + mReq.getEnd() + " " +
-					"GROUP BY square_ID";
-
+					"WHERE square_ID IN (" + cellList + ") AND ts_id >= " + tReq.getStart() + " AND ts_id <= " + tReq.getEnd() + " " +
+					"GROUP BY INFO_ABOUT_SQUARE_BY_TS.ts_ID";
+						
 			Class.forName("com.mysql.jdbc.Driver");
-
-			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
-
+			
+			connection = DriverManager.getConnection("jdbc:mysql://156.54.107.76:8001/milano_city_sensing?user=mbalduini&password=mbalduini");
+			
 			statement = connection.createStatement();
-
+			
 			resultSet = statement.executeQuery(sqlQuery);
-
+			
 			boolean next = resultSet.next();
+			
+			GeneralTimelineResponse response = new GeneralTimelineResponse();
+			GeneralTimelineStep step;
+			ArrayList<GeneralTimelineStep> stepList = new ArrayList<GeneralTimelineStep>();
+			
+			long lastTs = 0;
+			long tsInterval = 900000;
 
-			MapResponse response = new MapResponse();
-			MapCell mapCell;
-			ArrayList<MapCell> mapCellList = new ArrayList<MapCell>();
-
-
+			
 			while(next){
-				mapCell = new MapCell();
+				
+//				if(Long.parseLong(resultSet.getString(1)) - lastTs != 0){
+//					
+//					lastTs = Long.parseLong(resultSet.getString(1)) + tsInterval;
+//					
+//					while(Long.parseLong(resultSet.getString(1)) - lastTs != 0){
+//						
+//						step = new GeneralTimelineStep();
+//						
+//						step.setStart(lastTs - tsInterval);
+//						step.setEnd(lastTs);
+//						step.setMobile_anomaly(Double.parseDouble(resultSet.getString(2)));
+//						step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
+//
+//						stepList.add(step);
+//						
+//					}
+//					
+//				}
+				
+				step = new GeneralTimelineStep();
+				
+				lastTs = Long.parseLong(resultSet.getString(1)) + tsInterval;
+				step.setStart(Long.parseLong(resultSet.getString(1)));
+				step.setEnd(lastTs);
+				step.setMobile_anomaly(Double.parseDouble(resultSet.getString(2)));
+				step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
 
-				mapCell.setId(Long.parseLong(resultSet.getString(1)));
-				mapCell.setMobily_activity(Double.parseDouble(resultSet.getString(2)));
-				mapCell.setMobily_anomaly(Double.parseDouble(resultSet.getString(3)));
-				mapCell.setSocial_activity(Double.parseDouble(resultSet.getString(4)));
-				mapCell.setSocial_sentiment(Double.parseDouble(resultSet.getString(5)));
-
-				mapCellList.add(mapCell);
-
+				stepList.add(step);
+								
 				next = resultSet.next();
+								
 
 			}
+			
+			response.setSteps(stepList);
 
-			response.setCells(mapCellList);
-					
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
 			this.getResponse().commit();
@@ -118,22 +138,14 @@ public class MapDataServer extends ServerResource{
 		} catch (ClassNotFoundException e) {
 			logger.error("Error while getting jdbc Driver Class", e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while getting jdbc Driver Class");
-			this.getResponse().setEntity(gson.toJson("Error while getting jdbc Driver Class"), MediaType.APPLICATION_JSON);
+			this.getResponse().setEntity(gson.toJson("error"), MediaType.APPLICATION_JSON);
 			this.getResponse().commit();
 			this.commit();	
 			this.release();
 		} catch (SQLException e) {
 			logger.error("Error while connecting to mysql DB", e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while connecting to mysql DB");
-			this.getResponse().setEntity(gson.toJson("Error while connecting to mysql DB"), MediaType.APPLICATION_JSON);
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
-
-		} catch (MalformedJsonException e) {
-			logger.error("Error while serializing json, malformed json", e);
-			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while serializing json, malformed json");
-			this.getResponse().setEntity(gson.toJson("Error while serializing json, malformed json"), MediaType.APPLICATION_JSON);
+			this.getResponse().setEntity(gson.toJson("error"), MediaType.APPLICATION_JSON);
 			this.getResponse().commit();
 			this.commit();	
 			this.release();
