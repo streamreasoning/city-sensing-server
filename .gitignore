@@ -1,4 +1,5 @@
 .project
 .classpath
 .DS_Store
+.log
 /target
