@@ -1,5 +1,5 @@
-.project
-.classpath
-.DS_Store
-.log
+*.project
+*.classpath
+*.DS_Store
+*.log
 /target
