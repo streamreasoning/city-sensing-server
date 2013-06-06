@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 
+import eu.deib.polimi.city_sensing_server.configuration.Config;
+
 public class ContextTimelineDataServer extends ServerResource{
 
 	private Logger logger = LoggerFactory.getLogger(ContextTimelineDataServer.class.getName());
@@ -69,7 +71,7 @@ public class ContextTimelineDataServer extends ServerResource{
 
 			Class.forName("com.mysql.jdbc.Driver");
 
-			connection = DriverManager.getConnection("jdbc:mysql://156.54.107.76:8001/milano_city_sensing?user=mbalduini&password=mbalduini");
+			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
 
 			statement = connection.createStatement();
 

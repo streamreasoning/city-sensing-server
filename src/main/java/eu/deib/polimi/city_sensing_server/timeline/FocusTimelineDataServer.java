@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 
+import eu.deib.polimi.city_sensing_server.configuration.Config;
 import eu.deib.polimi.city_sensing_server.timeline.GeneralTimelineResponse;
 import eu.deib.polimi.city_sensing_server.timeline.GeneralTimelineStep;
 
@@ -78,7 +79,7 @@ public class FocusTimelineDataServer extends ServerResource{
 						
 			Class.forName("com.mysql.jdbc.Driver");
 			
-			connection = DriverManager.getConnection("jdbc:mysql://156.54.107.76:8001/milano_city_sensing?user=mbalduini&password=mbalduini");
+			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
 			
 			statement = connection.createStatement();
 			

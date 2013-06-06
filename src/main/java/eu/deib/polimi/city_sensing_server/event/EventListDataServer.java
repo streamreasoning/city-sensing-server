@@ -73,7 +73,7 @@ public class EventListDataServer extends ServerResource{
 
 			cellList = cellList.substring(0, cellList.length() - 1);
 
-			String sqlQuery = "SELECT EVENT.event_ID, EVENT.name, EVENT.address, EVENT.start_date, EVENT.end_date, EVENT.link, VENUE.venue_ID " +
+			String sqlQuery = "SELECT EVENT.event_ID, EVENT.name, VENUE.address, EVENT.start_date, EVENT.end_date, EVENT.link, EVENT.venue_ID " +
 					"FROM EVENT,VENUE " +
 					"WHERE event_venue_ID = venue_ID AND ( start_date >= " + mReq.getStart() + " OR end_date <= " + mReq.getEnd() + " ) AND " +
 					"venue_square_ID IN  (" + cellList + ") ";
@@ -113,9 +113,9 @@ public class EventListDataServer extends ServerResource{
 				event.setDate(dateList);
 				event.setLink(resultSet.getString(6));
 				
-				sqlQuery = "SELECT fs_cat_ID, FUORISALONE_CAT.name" +
-						"FROM VENUE_FUORISALONE, FUORISALONE_CAT " +
-						"WHERE VENUE_FUORISALONE.fs_cat_ID = FUORISALONE_CAT.fs_cat_ID AND VENUE_FUORISALONE.fs_cat_ID = " + resultSet.getString(7);
+				sqlQuery = "SELECT event_fs_cat_ID, FUORISALONE_CAT.name" +
+						"FROM EVENT, FUORISALONE_CAT " +
+						"WHERE EVENT.event_fs_cat_ID = FUORISALONE_CAT.fs_cat_ID AND EVENT.event_fs_cat_ID = " + resultSet.getString(7);
 				
 				statement = connection.createStatement();
 

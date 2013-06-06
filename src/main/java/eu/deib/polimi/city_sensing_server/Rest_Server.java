@@ -51,8 +51,8 @@ public class Rest_Server extends Application {
 		router.attach("/sidepanel",SidePanelDataServer.class);
 		router.attach("/conceptnetwork",ConceptNetDataServer.class);
 		router.attach("/conceptflows",ConceptFlowsDataServer.class);
-		router.attach("/focustimeline",FocusTimelineDataServer.class);
-		router.attach("/contexttimeline",ContextTimelineDataServer.class);
+		router.attach("/timeline/focus",FocusTimelineDataServer.class);
+		router.attach("/timeline/context",ContextTimelineDataServer.class);
 		router.attach("/eventlist",EventListDataServer.class);
 
 		return router;
