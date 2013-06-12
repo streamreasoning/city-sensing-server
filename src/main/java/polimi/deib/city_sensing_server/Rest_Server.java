@@ -1,0 +1,62 @@
+package polimi.deib.city_sensing_server;
+
+import org.restlet.Application;
+import org.restlet.Component;
+import org.restlet.Restlet;
+import org.restlet.data.Protocol;
+import org.restlet.routing.Router;
+import org.restlet.routing.Template;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import polimi.deib.city_sensing_server.concept_flows.ConceptFlowsDataServer;
+import polimi.deib.city_sensing_server.concept_network.ConceptNetDataServer;
+import polimi.deib.city_sensing_server.configuration.Config;
+import polimi.deib.city_sensing_server.event.EventListDataServer;
+import polimi.deib.city_sensing_server.map.MapDataServer;
+import polimi.deib.city_sensing_server.side_panel.SidePanelDataServer;
+import polimi.deib.city_sensing_server.timeline.ContextTimelineDataServer;
+import polimi.deib.city_sensing_server.timeline.FocusTimelineDataServer;
+
+
+public class Rest_Server extends Application {
+	
+	private static Logger logger = LoggerFactory.getLogger(Rest_Server.class.getName());
+
+	public static void main(String[] args) throws Exception{
+
+		Component component = new Component();
+		component.getServers().add(Protocol.HTTP, Config.getInstance().getServerPort());
+		component.getClients().add(Protocol.FILE);  
+
+		Rest_Server server = new Rest_Server();
+		component.getDefaultHost().attach("", server);
+
+		component.getDefaultHost().attach(server); 
+
+		try {
+			component.start();
+		} catch (Exception e) {
+			logger.error("Error while starting Instagram Server", e);
+		}
+
+	}
+
+	public Restlet createInboundRoot(){
+
+		Router router = new Router(getContext());
+		router.setDefaultMatchingMode(Template.MODE_EQUALS);
+
+		router.attach("/test",Test.class);
+		router.attach("/map",MapDataServer.class);
+		router.attach("/sidepanel",SidePanelDataServer.class);
+		router.attach("/conceptnetwork",ConceptNetDataServer.class);
+		router.attach("/conceptflows",ConceptFlowsDataServer.class);
+		router.attach("/timeline/focus",FocusTimelineDataServer.class);
+		router.attach("/timeline/context",ContextTimelineDataServer.class);
+		router.attach("/eventlist",EventListDataServer.class);
+
+		return router;
+	}
+
+}
