@@ -68,7 +68,7 @@ public class ContextTimelineDataServer extends ServerResource{
 			String sqlQuery = "SELECT 3h_ts_id,AVG(anomaly_index) AS mobily_anomaly,SUM(n_tweets) AS social_activity " +
 					"FROM INFO_ABOUT_SQUARE_BY_TS " +
 					"WHERE square_ID IN (" + cellList + ") " +
-					"GROUP BY INFO_ABOUT_SQUARE_BY_TS.3h_ts_id";
+					"GROUP BY 3h_ts_id";
 
 			Class.forName("com.mysql.jdbc.Driver");
 
@@ -86,47 +86,47 @@ public class ContextTimelineDataServer extends ServerResource{
 
 
 			long tsInterval = 10800000;
-			long firstHistoricalTs = 1365199200000L;
-			long startIntervalTS = 0;
-			long lastEndIntervalTs = firstHistoricalTs;
+//			long firstHistoricalTs = 1365199200000L;
+//			long startIntervalTS = 0;
+//			long lastEndIntervalTs = firstHistoricalTs;
 			
 			while(next){
 
-				startIntervalTS = firstHistoricalTs + (Long.parseLong(resultSet.getString(1)) * tsInterval);
-
-				while(lastEndIntervalTs < startIntervalTS){
-
-					step = new GeneralTimelineStep();
-
-					step.setStart(lastEndIntervalTs);
-					lastEndIntervalTs = lastEndIntervalTs + tsInterval;
-					step.setEnd(lastEndIntervalTs);
-					step.setMobile_anomaly(0);
-					step.setSocial_activity(0);
-
-					stepList.add(step);
-
-				}
-
-				while(startIntervalTS - lastEndIntervalTs >= tsInterval){
-
-					step = new GeneralTimelineStep();
-
-					step.setStart(lastEndIntervalTs);
-					lastEndIntervalTs = lastEndIntervalTs + tsInterval;
-					step.setEnd(lastEndIntervalTs);
-					step.setMobile_anomaly(0);
-					step.setSocial_activity(0);
-
-					stepList.add(step);
-
-				}
+//				startIntervalTS = Long.parseLong(resultSet.getString(1));
+//
+//				while(lastEndIntervalTs < startIntervalTS){
+//
+//					step = new GeneralTimelineStep();
+//
+//					step.setStart(lastEndIntervalTs);
+//					lastEndIntervalTs = lastEndIntervalTs + tsInterval;
+//					step.setEnd(lastEndIntervalTs);
+//					step.setMobile_anomaly(0);
+//					step.setSocial_activity(0);
+//
+//					stepList.add(step);
+//
+//				}
+//
+//				while(startIntervalTS - lastEndIntervalTs >= tsInterval){
+//
+//					step = new GeneralTimelineStep();
+//
+//					step.setStart(lastEndIntervalTs);
+//					lastEndIntervalTs = lastEndIntervalTs + tsInterval;
+//					step.setEnd(lastEndIntervalTs);
+//					step.setMobile_anomaly(0);
+//					step.setSocial_activity(0);
+//
+//					stepList.add(step);
+//
+//				}
 
 				step = new GeneralTimelineStep();
 
-				lastEndIntervalTs = startIntervalTS + tsInterval;
-				step.setStart(startIntervalTS);
-				step.setEnd(lastEndIntervalTs);
+//				lastEndIntervalTs = startIntervalTS + tsInterval;
+				step.setStart(Long.parseLong(resultSet.getString(1)));
+				step.setEnd(Long.parseLong(resultSet.getString(1)) + tsInterval);
 				step.setMobile_anomaly(Double.parseDouble(resultSet.getString(2)));
 				step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
 

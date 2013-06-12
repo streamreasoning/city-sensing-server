@@ -85,7 +85,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
 
 			String sqlQuery = "CREATE OR REPLACE VIEW `foursquare_cat_in_square` AS " +
-					"SELECT FOURSQUARE_CAT.name AS name, VENUE.venue_square_ID AS square_ID" +
+					"SELECT FOURSQUARE_CAT.name AS name, VENUE.venue_square_ID AS square_ID " +
 					"FROM FOURSQUARE_CAT,VENUE_FOURSQUARE,VENUE " +
 					"WHERE VENUE.venue_square_ID in (" + cellList + ") AND " +
 					"VENUE_FOURSQUARE.venue_fsq_ID = VENUE.venue_ID AND VENUE_FOURSQUARE.fsq_cat_ID = FOURSQUARE_CAT.fsq_cat_ID";
@@ -95,7 +95,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 			statement.executeUpdate(sqlQuery);
 
 			sqlQuery = "CREATE OR REPLACE VIEW `fuorisalone_cat_in_square` AS " +
-					"SELECT FUORISALONE_CAT.name AS name, VENUE.venue_square_ID AS square_ID" +
+					"SELECT FUORISALONE_CAT.name AS name, VENUE.venue_square_ID AS square_ID " +
 					"FROM FUORISALONE_CAT,VENUE,EVENT " +
 					"WHERE VENUE.venue_square_ID in (" + cellList + ") " +
 					"AND VENUE.venue_ID = EVENT.event_venue_ID AND " +
