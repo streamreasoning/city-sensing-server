@@ -144,19 +144,19 @@ public class FocusTimelineDataServer extends ServerResource{
 
 			}
 			
-			while(lastEndIntervalTs < Long.parseLong(tReq.getEnd())){
-
-				step = new GeneralTimelineStep();
-
-				step.setStart(lastEndIntervalTs);
-				lastEndIntervalTs = lastEndIntervalTs + tsInterval;
-				step.setEnd(lastEndIntervalTs);
-				step.setMobile_anomaly(0);
-				step.setSocial_activity(0);
-
-				stepList.add(step);
-
-			}
+//			while(lastEndIntervalTs < Long.parseLong(tReq.getEnd())){
+//
+//				step = new GeneralTimelineStep();
+//
+//				step.setStart(lastEndIntervalTs);
+//				lastEndIntervalTs = lastEndIntervalTs + tsInterval;
+//				step.setEnd(lastEndIntervalTs);
+//				step.setMobile_anomaly(0);
+//				step.setSocial_activity(0);
+//
+//				stepList.add(step);
+//
+//			}
 
 			response.setSteps(stepList);
 
