@@ -114,7 +114,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>eu.deib.polimi.city_sensing_server.Rest_Server</mainClass>
+							<mainClass>polimi.deib.city_sensing_server.Rest_Server</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>

@@ -22,9 +22,10 @@ import polimi.deib.city_sensing_server.timeline.FocusTimelineDataServer;
 public class Rest_Server extends Application {
 	
 	private static Logger logger = LoggerFactory.getLogger(Rest_Server.class.getName());
+	private static String version = Config.getInstance().getServerVersion();
 
 	public static void main(String[] args) throws Exception{
-
+		
 		Component component = new Component();
 		component.getServers().add(Protocol.HTTP, Config.getInstance().getServerPort());
 		component.getClients().add(Protocol.FILE);  
@@ -47,14 +48,14 @@ public class Rest_Server extends Application {
 		Router router = new Router(getContext());
 		router.setDefaultMatchingMode(Template.MODE_EQUALS);
 
-		router.attach("/test",Test.class);
-		router.attach("/map",MapDataServer.class);
-		router.attach("/sidepanel",SidePanelDataServer.class);
-		router.attach("/conceptnetwork",ConceptNetDataServer.class);
-		router.attach("/conceptflows",ConceptFlowsDataServer.class);
-		router.attach("/timeline/focus",FocusTimelineDataServer.class);
-		router.attach("/timeline/context",ContextTimelineDataServer.class);
-		router.attach("/eventlist",EventListDataServer.class);
+		router.attach("/" + version + "/test",Test.class);
+		router.attach("/" + version + "/map",MapDataServer.class);
+		router.attach("/" + version + "/sidepanel",SidePanelDataServer.class);
+		router.attach("/" + version + "/conceptnetwork",ConceptNetDataServer.class);
+		router.attach("/" + version + "/conceptflows",ConceptFlowsDataServer.class);
+		router.attach("/" + version + "/timeline/focus",FocusTimelineDataServer.class);
+		router.attach("/" + version + "/timeline/context",ContextTimelineDataServer.class);
+		router.attach("/" + version + "/eventlist",EventListDataServer.class);
 
 		return router;
 	}

@@ -21,6 +21,10 @@ public class Config {
 		}
 	}
 	
+	public String getServerVersion(){
+		return config.getString("city_sensing_server.version");
+	}
+	
 	public int getServerPort(){
 		return config.getInt("city_sensing_server.port");
 	}
