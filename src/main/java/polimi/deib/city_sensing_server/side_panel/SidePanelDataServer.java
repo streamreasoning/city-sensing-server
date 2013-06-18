@@ -8,6 +8,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
@@ -20,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import polimi.deib.city_sensing_server.configuration.Config;
+import polimi.deib.city_sesning_server.utilities.ResponseMapping;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
@@ -38,11 +41,12 @@ public class SidePanelDataServer extends ServerResource{
 		Connection connection = null;
 		Statement statement = null;
 		ResultSet resultSet = null;
-		
+		HashMap<Integer, ResponseMapping> respMap = new HashMap<Integer, ResponseMapping>();
+
 		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get("org.restlet.http.headers");
 		if (responseHeaders == null) {
-		    responseHeaders = new Series(Header.class);
-		    getResponse().getAttributes().put("org.restlet.http.headers", responseHeaders);
+			responseHeaders = new Series(Header.class);
+			getResponse().getAttributes().put("org.restlet.http.headers", responseHeaders);
 		}
 		responseHeaders.add(new Header("Access-Control-Allow-Origin", "*"));
 
@@ -55,7 +59,7 @@ public class SidePanelDataServer extends ServerResource{
 			SidePanelRequest spReq = gson.fromJson(reader, SidePanelRequest.class);
 
 			String cellList = new String();
-			
+
 			if(spReq.getStart() == null || Long.parseLong(spReq.getStart()) < 0){
 				spReq.setStart("1365199200000");
 			}
@@ -72,42 +76,271 @@ public class SidePanelDataServer extends ServerResource{
 
 			cellList = cellList.substring(0, cellList.length() - 1);
 
-			String sqlQuery = "SELECT outcoming_call_number,incoming_call_number,outcoming_sms_number,incoming_sms_number,data_cdr_number,hashtag,n_occurrences " +
-					"FROM INFO_ABOUT_SQUARE_BY_TS, HASHTAG_SQUARE " +
-					"WHERE square_ID IN (" + cellList + ") AND ts_ID >= " + spReq.getStart() + " AND ts_ID <= " + spReq.getEnd() + " " +
-					"AND INFO_ABOUT_SQUARE_BY_TS.square_ID = HASHTAG_SQUARE.ht_square_ID AND INFO_ABOUT_SQUARE_BY_TS.ts_ID = HASHTAG_SQUARE.ht_ts_ID";
-			
 			Class.forName("com.mysql.jdbc.Driver");
 
 			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
+
+			ResponseMapping rm;
+			String key;
+
+			String sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_call_in WHERE square_id IN (" + cellList + ") AND quarter >= " + spReq.getStart() + " AND quarter <= " + spReq.getEnd() + " GROUP BY square_id ";
 
 			statement = connection.createStatement();
 
 			resultSet = statement.executeQuery(sqlQuery);
 
 			boolean next = resultSet.next();
-			
+
+			while(next) {
+
+				if(resultSet.getString(1) != null && resultSet.getString(2) != null){
+					rm = new ResponseMapping();
+					key = resultSet.getString(1);
+					rm.setCell_id(Long.parseLong(resultSet.getString(1)));
+					rm.setStart_ts(Long.parseLong(resultSet.getString(2)));
+					if(resultSet.getString(3) != null)
+						rm.setCall_in(Double.parseDouble(resultSet.getString(3)));
+					else
+						rm.setCall_in(0);
+
+					respMap.put(key.hashCode(), rm);
+				}
+				next = resultSet.next();
+			}
+
+			resultSet.close();
+			statement.close();
+
+			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_call_out WHERE square_id IN (" + cellList + ") AND quarter >= " + spReq.getStart() + " AND quarter <= " + spReq.getEnd() + " GROUP BY square_id ";
+
+			statement = connection.createStatement();
+
+			resultSet = statement.executeQuery(sqlQuery);
+
+			next = resultSet.next();
+
+			while(next) {
+
+				if(resultSet.getString(1) != null && resultSet.getString(2) != null){
+					key = resultSet.getString(1);
+					if(respMap.containsKey(key.hashCode())){
+						rm = respMap.get(key.hashCode());
+						if(resultSet.getString(3) != null)
+							rm.setCall_out(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setCall_out(0);
+					} else {
+						rm = new ResponseMapping();
+						rm.setCell_id(Long.parseLong(resultSet.getString(1)));
+						rm.setStart_ts(Long.parseLong(resultSet.getString(2)));
+						if(resultSet.getString(3) != null)
+							rm.setCall_out(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setCall_out(0);
+					}
+					respMap.put(key.hashCode(), rm);
+				}
+				next = resultSet.next();
+			}
+
+			resultSet.close();
+			statement.close();
+
+			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_internet WHERE square_id IN (" + cellList + ") AND quarter >= " + spReq.getStart() + " AND quarter <= " + spReq.getEnd() + " GROUP BY square_id ";
+
+			statement = connection.createStatement();
+
+			resultSet = statement.executeQuery(sqlQuery);
+
+			next = resultSet.next();
+
+			while(next) {
+
+				if(resultSet.getString(1) != null && resultSet.getString(2) != null){
+					key = resultSet.getString(1);
+					if(respMap.containsKey(key.hashCode())){
+						rm = respMap.get(key.hashCode());
+						if(resultSet.getString(3) != null)
+							rm.setInternet(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setInternet(0);
+					} else {
+						rm = new ResponseMapping();
+						rm.setCell_id(Long.parseLong(resultSet.getString(1)));
+						rm.setStart_ts(Long.parseLong(resultSet.getString(2)));
+						if(resultSet.getString(3) != null)
+							rm.setInternet(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setInternet(0);
+					}
+					respMap.put(key.hashCode(), rm);
+				}
+				next = resultSet.next();
+			}
+
+			resultSet.close();
+			statement.close();
+
+			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_rec_in WHERE square_id IN (" + cellList + ") AND quarter >= " + spReq.getStart() + " AND quarter <= " + spReq.getEnd() + " GROUP BY square_id ";
+
+			statement = connection.createStatement();
+
+			resultSet = statement.executeQuery(sqlQuery);
+
+			next = resultSet.next();
+
+			while(next) {
+
+				if(resultSet.getString(1) != null && resultSet.getString(2) != null){
+					key = resultSet.getString(1);
+					if(respMap.containsKey(key.hashCode())){
+						rm = respMap.get(key.hashCode());
+						if(resultSet.getString(3) != null)
+							rm.setRec_in(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setRec_in(0);
+					} else {
+						rm = new ResponseMapping();
+						rm.setCell_id(Long.parseLong(resultSet.getString(1)));
+						rm.setStart_ts(Long.parseLong(resultSet.getString(2)));
+						if(resultSet.getString(3) != null)
+							rm.setRec_in(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setRec_in(0);
+					}
+					respMap.put(key.hashCode(), rm);
+				}
+				next = resultSet.next();
+			}
+
+			resultSet.close();
+			statement.close();
+
+			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_rec_out WHERE square_id IN (" + cellList + ") AND quarter >= " + spReq.getStart() + " AND quarter <= " + spReq.getEnd() + " GROUP BY square_id ";
+
+			statement = connection.createStatement();
+
+			resultSet = statement.executeQuery(sqlQuery);
+
+			next = resultSet.next();
+
+			while(next) {
+
+				if(resultSet.getString(1) != null && resultSet.getString(2) != null){
+					key = resultSet.getString(1);
+					if(respMap.containsKey(key.hashCode())){
+						rm = respMap.get(key.hashCode());
+						if(resultSet.getString(3) != null)
+							rm.setRec_out(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setRec_out(0);
+					} else {
+						rm = new ResponseMapping();
+						rm.setCell_id(Long.parseLong(resultSet.getString(1)));
+						rm.setStart_ts(Long.parseLong(resultSet.getString(2)));
+						if(resultSet.getString(3) != null)
+							rm.setRec_out(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setRec_out(0);
+					}
+					respMap.put(key.hashCode(), rm);
+				}
+				next = resultSet.next();
+			}
+
+			resultSet.close();
+			statement.close();
+
+			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_sms_in WHERE square_id IN (" + cellList + ") AND quarter >= " + spReq.getStart() + " AND quarter <= " + spReq.getEnd() + " GROUP BY square_id ";
+
+			statement = connection.createStatement();
+
+			resultSet = statement.executeQuery(sqlQuery);
+
+			next = resultSet.next();
+
+			while(next) {
+
+				if(resultSet.getString(1) != null && resultSet.getString(2) != null){
+					key = resultSet.getString(1);
+					if(respMap.containsKey(key.hashCode())){
+						rm = respMap.get(key.hashCode());
+						if(resultSet.getString(3) != null)
+							rm.setSms_in(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setSms_in(0);
+					} else {
+						rm = new ResponseMapping();
+						rm.setCell_id(Long.parseLong(resultSet.getString(1)));
+						rm.setStart_ts(Long.parseLong(resultSet.getString(2)));
+						if(resultSet.getString(3) != null)
+							rm.setSms_in(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setSms_in(0);
+					}
+					respMap.put(key.hashCode(), rm);
+				}
+				next = resultSet.next();
+			}
+
+			resultSet.close();
+			statement.close();
+
+			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_sms_out WHERE square_id IN (" + cellList + ") AND quarter >= " + spReq.getStart() + " AND quarter <= " + spReq.getEnd() + " GROUP BY square_id ";
+
+			statement = connection.createStatement();
+
+			resultSet = statement.executeQuery(sqlQuery);
+
+			next = resultSet.next();
+
+			while(next) {
+
+				if(resultSet.getString(1) != null && resultSet.getString(2) != null){
+					key = resultSet.getString(1);
+					if(respMap.containsKey(key.hashCode())){
+						rm = respMap.get(key.hashCode());
+						if(resultSet.getString(3) != null)
+							rm.setSms_out(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setSms_out(0);
+					} else {
+						rm = new ResponseMapping();
+						rm.setCell_id(Long.parseLong(resultSet.getString(1)));
+						rm.setStart_ts(Long.parseLong(resultSet.getString(2)));
+						if(resultSet.getString(3) != null)
+							rm.setSms_out(Double.parseDouble(resultSet.getString(3)));
+						else
+							rm.setSms_out(0);
+					}
+					respMap.put(key.hashCode(), rm);
+				}
+				next = resultSet.next();
+			}
+
+			resultSet.close();
+			statement.close();
+
+			sqlQuery = "SELECT DISTINCT hashtag,n_occurrences " +
+					"FROM INFO_ABOUT_SQUARE_BY_TS, HASHTAG_SQUARE " +
+					"WHERE ht_square_ID IN (" + cellList + ") AND ht_ts_ID >= " + spReq.getStart() + " AND ht_ts_ID <= " + spReq.getEnd() + " " +
+					"ORDER BY n_occurrences DESC ";
+
+			statement = connection.createStatement();
+
+			resultSet = statement.executeQuery(sqlQuery);
+
+			next = resultSet.next();
+
 			SidePanelResponse response = new SidePanelResponse();
 			SidePanelHashtag hashtag;
 			ArrayList<SidePanelHashtag> hashtagList = new ArrayList<SidePanelHashtag>();
-			
-			double totalOutcomingCalls = 0;
-			double totalIncomingCalls = 0;
-			double totalOutcomingSMS = 0;
-			double totalIncomingSMS = 0;
-			double totalDataCdr = 0;
 
 			while(next){
 				hashtag = new SidePanelHashtag();
 
-				totalOutcomingCalls = totalOutcomingCalls + Double.parseDouble(resultSet.getString(1));
-				totalIncomingCalls = totalIncomingCalls + Double.parseDouble(resultSet.getString(2));
-				totalOutcomingCalls = totalOutcomingSMS + Double.parseDouble(resultSet.getString(3));
-				totalIncomingSMS = totalIncomingSMS + Double.parseDouble(resultSet.getString(4));
-				totalDataCdr = totalDataCdr + Double.parseDouble(resultSet.getString(5));
-				
-				hashtag.setLabel(resultSet.getString(6));
-				hashtag.setValue(Long.parseLong(resultSet.getString(7)));
+				hashtag.setLabel(resultSet.getString(1));
+				hashtag.setValue(Long.parseLong(resultSet.getString(2)));
 
 				hashtagList.add(hashtag);
 
@@ -115,13 +348,64 @@ public class SidePanelDataServer extends ServerResource{
 
 			}
 
-			response.setCalls_out(totalOutcomingCalls);
-			response.setCalls_in(totalIncomingCalls);
-			response.setMessages_out(totalOutcomingSMS);
-			response.setMessages_in(totalIncomingSMS);
-			response.setData_traffic(totalDataCdr);
-			response.setHashtags(hashtagList);
-					
+			Set<Integer> keyset = respMap.keySet();
+
+			for(int k : keyset){
+				rm = respMap.get(k);
+				response.setCalls_out(response.getCalls_out() + rm.getCall_out() + rm.getRec_out());
+				response.setCalls_in(response.getCalls_in() + rm.getCall_in() + rm.getRec_in());
+				response.setMessages_out(response.getMessages_out() + rm.getSms_out());
+				response.setMessages_in(response.getMessages_in() + rm.getSms_in());
+				response.setData_traffic(response.getData_traffic() + rm.getInternet());
+				response.setHashtags(hashtagList);
+			}
+
+			//			sqlQuery = "SELECT outcoming_call_number,incoming_call_number,outcoming_sms_number,incoming_sms_number,data_cdr_number,hashtag,n_occurrences " +
+			//					"FROM INFO_ABOUT_SQUARE_BY_TS, HASHTAG_SQUARE " +
+			//					"WHERE square_ID IN (" + cellList + ") AND ts_ID >= " + spReq.getStart() + " AND ts_ID <= " + spReq.getEnd() + " " +
+			//					"AND INFO_ABOUT_SQUARE_BY_TS.square_ID = HASHTAG_SQUARE.ht_square_ID AND INFO_ABOUT_SQUARE_BY_TS.ts_ID = HASHTAG_SQUARE.ht_ts_ID";
+			//			
+			//			statement = connection.createStatement();
+			//
+			//			resultSet = statement.executeQuery(sqlQuery);
+			//
+			//			next = resultSet.next();
+			//			
+			//			SidePanelResponse response = new SidePanelResponse();
+			//			SidePanelHashtag hashtag;
+			//			ArrayList<SidePanelHashtag> hashtagList = new ArrayList<SidePanelHashtag>();
+			//			
+			//			double totalOutcomingCalls = 0;
+			//			double totalIncomingCalls = 0;
+			//			double totalOutcomingSMS = 0;
+			//			double totalIncomingSMS = 0;
+			//			double totalDataCdr = 0;
+			//
+			//			while(next){
+			//				hashtag = new SidePanelHashtag();
+			//
+			//				totalOutcomingCalls = totalOutcomingCalls + Double.parseDouble(resultSet.getString(1));
+			//				totalIncomingCalls = totalIncomingCalls + Double.parseDouble(resultSet.getString(2));
+			//				totalOutcomingCalls = totalOutcomingSMS + Double.parseDouble(resultSet.getString(3));
+			//				totalIncomingSMS = totalIncomingSMS + Double.parseDouble(resultSet.getString(4));
+			//				totalDataCdr = totalDataCdr + Double.parseDouble(resultSet.getString(5));
+			//				
+			//				hashtag.setLabel(resultSet.getString(6));
+			//				hashtag.setValue(Long.parseLong(resultSet.getString(7)));
+			//
+			//				hashtagList.add(hashtag);
+			//
+			//				next = resultSet.next();
+			//
+			//			}
+			//
+			//			response.setCalls_out(totalOutcomingCalls);
+			//			response.setCalls_in(totalIncomingCalls);
+			//			response.setMessages_out(totalOutcomingSMS);
+			//			response.setMessages_in(totalIncomingSMS);
+			//			response.setData_traffic(totalDataCdr);
+			//			response.setHashtags(hashtagList);
+
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
 			this.getResponse().commit();
