@@ -34,10 +34,11 @@ public class ConceptFlowsDataServer extends ServerResource{
 	@Post
 	public void dataServer(Representation rep) throws IOException {
 
+		logger.debug("Concept flows request received");
 		Gson gson = new GsonBuilder()
-	     .registerTypeAdapter(ConceptFlowsNode.class, new ConceptFlowsNodeSerializer())
-	     .create();
-		
+		.registerTypeAdapter(ConceptFlowsNode.class, new ConceptFlowsNodeSerializer())
+		.create();
+
 		Connection connection = null;
 		Statement statement = null;
 		ResultSet resultSet = null;
@@ -85,7 +86,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
 
 			String sqlQuery = "CREATE OR REPLACE VIEW `foursquare_cat_in_square` AS " +
-					"SELECT FOURSQUARE_CAT.name AS name, VENUE.venue_square_ID AS square_ID " +
+					"SELECT DISTINCT FOURSQUARE_CAT.name AS name, VENUE.venue_square_ID AS square_ID " +
 					"FROM FOURSQUARE_CAT,VENUE_FOURSQUARE,VENUE " +
 					"WHERE VENUE.venue_square_ID in (" + cellList + ") AND " +
 					"VENUE_FOURSQUARE.venue_fsq_ID = VENUE.venue_ID AND VENUE_FOURSQUARE.fsq_cat_ID = FOURSQUARE_CAT.fsq_cat_ID";
@@ -94,8 +95,12 @@ public class ConceptFlowsDataServer extends ServerResource{
 
 			statement.executeUpdate(sqlQuery);
 
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
+
 			sqlQuery = "CREATE OR REPLACE VIEW `fuorisalone_cat_in_square` AS " +
-					"SELECT FUORISALONE_CAT.name AS name, VENUE.venue_square_ID AS square_ID " +
+					"SELECT DISTINCT FUORISALONE_CAT.name AS name, VENUE.venue_square_ID AS square_ID " +
 					"FROM FUORISALONE_CAT,VENUE,EVENT " +
 					"WHERE VENUE.venue_square_ID in (" + cellList + ") " +
 					"AND VENUE.venue_ID = EVENT.event_venue_ID AND " +
@@ -105,14 +110,22 @@ public class ConceptFlowsDataServer extends ServerResource{
 
 			statement.executeUpdate(sqlQuery);
 
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
+
 			sqlQuery = "CREATE OR REPLACE VIEW `hashtag_in_square_by_ts` AS " +
-					"SELECT hashtag, ht_square_ID, ht_ts_ID " +
+					"SELECT DISTINCT hashtag, ht_square_ID, ht_ts_ID " +
 					"FROM HASHTAG_SQUARE " +
 					"WHERE ht_square_ID in (" + cellList + ") AND ht_ts_ID >=" + cReq.getStart() + " AND ht_ts_ID <=" + cReq.getEnd();
 
 			statement = connection.createStatement();
 
 			statement.executeUpdate(sqlQuery);
+
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
 
 			sqlQuery = "SELECT name " +
 					"FROM foursquare_cat_in_square ";
@@ -129,9 +142,16 @@ public class ConceptFlowsDataServer extends ServerResource{
 				node.setGroup("foursquare");
 
 				nodeList.add(node);
-				
+
 				next = resultSet.next();
 
+			}
+
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
 			}
 
 			sqlQuery = "SELECT name " +
@@ -149,9 +169,16 @@ public class ConceptFlowsDataServer extends ServerResource{
 				node.setGroup("fuorisalone");
 
 				nodeList.add(node);
-				
+
 				next = resultSet.next();
 
+			}
+
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
 			}
 
 			sqlQuery = "SELECT hashtag " +
@@ -170,11 +197,18 @@ public class ConceptFlowsDataServer extends ServerResource{
 				node.setSentiment(0);
 
 				nodeList.add(node);
-				
+
 				next = resultSet.next();
 
 			}
-			
+
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
+
 			sqlQuery = "SELECT c1.name as fuorisalone_cat_name,c2.name as foursquare_cat_name,COUNT(*) as count " +
 					"FROM fuorisalone_cat_in_square as c1, foursquare_cat_in_square as c2 " +
 					"WHERE c1.square_ID IN (" + cellList + ") AND c2.square_ID IN (" + cellList + ") " +
@@ -193,9 +227,16 @@ public class ConceptFlowsDataServer extends ServerResource{
 				link.setValue(Long.parseLong(resultSet.getString(3)));
 
 				linkList.add(link);
-			
+
 				next = resultSet.next();
-			
+
+			}
+
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
 			}
 
 			sqlQuery = "SELECT c1.name as fuorisalone_cat_name,h2.hashtag,COUNT(*) as count " +
@@ -217,7 +258,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 				link.setValue(Long.parseLong(resultSet.getString(3)));
 
 				linkList.add(link);
-				
+
 				next = resultSet.next();
 
 			}
@@ -226,6 +267,17 @@ public class ConceptFlowsDataServer extends ServerResource{
 			response.setNodes(nodeList);
 			response.setLinks(linkList);
 
+
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
+			if(connection != null && !connection.isClosed()){
+				connection.close();
+			}
+
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
 			this.getResponse().commit();
@@ -233,42 +285,64 @@ public class ConceptFlowsDataServer extends ServerResource{
 			this.release();
 
 		} catch (ClassNotFoundException e) {
-			logger.error("Error while getting jdbc Driver Class", e);
-			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while getting jdbc Driver Class");
-			this.getResponse().setEntity(gson.toJson("error"), MediaType.APPLICATION_JSON);
+			
+			String error = "Error while getting jdbc Driver Class";
+			logger.error(error, e);
+			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
 			this.getResponse().commit();
 			this.commit();	
 			this.release();
+			
 		} catch (SQLException e) {
-			logger.error("Error while connecting to mysql DB or retrieving data from db", e);
-			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while connecting to mysql DB");
-			this.getResponse().setEntity(gson.toJson("error"), MediaType.APPLICATION_JSON);
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
-
-		} finally {
 			try {
 				if(resultSet != null && !resultSet.isClosed()){
 					resultSet.close();
 				}
-			} catch (SQLException e) {
-				logger.error("Error while closing resultset", e);
+			} catch (SQLException e1) {
+				String error = "Error while connecting to mysql DB and while closing resultset";
+				logger.error(error, e1);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
 			}
 			try {
 				if(statement != null && !statement.isClosed()){
 					statement.close();
 				}
-			} catch (SQLException e) {
-				logger.error("Error while closing statement", e);
+			} catch (SQLException e1) {
+				String error = "Error while connecting to mysql DB and while closing statement";
+				logger.error(error, e1);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
 			}
 			try {
 				if(connection != null && !connection.isClosed()){
 					connection.close();
 				}
-			} catch (SQLException e) {
-				logger.error("Error while closing database connection", e);
+			} catch (SQLException e1) {
+				String error = "Error while connecting to mysql DB and while closing database connection";
+				logger.error(error, e1);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
 			}
+
+			String error = "Error while connecting to mysql DB or retrieving data from db";
+			logger.error(error, e);
+			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+			this.getResponse().commit();
+			this.commit();	
+			this.release();
+
 		}
 
 	}

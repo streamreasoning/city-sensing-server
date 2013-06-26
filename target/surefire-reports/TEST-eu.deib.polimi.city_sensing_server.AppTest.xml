@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite failures="0" time="0.036" errors="0" skipped="0" tests="1" name="eu.deib.polimi.city_sensing_server.AppTest">
+<testsuite failures="0" time="0.01" errors="0" skipped="0" tests="1" name="eu.deib.polimi.city_sensing_server.AppTest">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib"/>
@@ -21,7 +21,7 @@
     <property name="basedir" value="/Users/baldo/Documents/Work/git/city-sensing-server"/>
     <property name="java.endorsed.dirs" value="/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre/lib/endorsed"/>
     <property name="os.arch" value="x86_64"/>
-    <property name="surefire.real.class.path" value="/Users/baldo/Documents/Work/git/city-sensing-server/target/surefire/surefirebooter8667931487091711891.jar"/>
+    <property name="surefire.real.class.path" value="/Users/baldo/Documents/Work/git/city-sensing-server/target/surefire/surefirebooter337957667599683088.jar"/>
     <property name="java.io.tmpdir" value="/var/folders/pz/lqc9ypjs7fjb03625k51qm600000gp/T/"/>
     <property name="line.separator" value="
 "/>
@@ -45,7 +45,7 @@
     <property name="java.vm.specification.version" value="1.7"/>
     <property name="sun.arch.data.model" value="64"/>
     <property name="java.home" value="/Library/Java/JavaVirtualMachines/jdk1.7.0_21.jdk/Contents/Home/jre"/>
-    <property name="sun.java.command" value="/Users/baldo/Documents/Work/git/city-sensing-server/target/surefire/surefirebooter8667931487091711891.jar /Users/baldo/Documents/Work/git/city-sensing-server/target/surefire/surefire5319157273447110184tmp /Users/baldo/Documents/Work/git/city-sensing-server/target/surefire/surefire8534034014775395575tmp"/>
+    <property name="sun.java.command" value="/Users/baldo/Documents/Work/git/city-sensing-server/target/surefire/surefirebooter337957667599683088.jar /Users/baldo/Documents/Work/git/city-sensing-server/target/surefire/surefire4846636835723167953tmp /Users/baldo/Documents/Work/git/city-sensing-server/target/surefire/surefire7042476350712839028tmp"/>
     <property name="java.specification.vendor" value="Oracle Corporation"/>
     <property name="user.language" value="en"/>
     <property name="user.language.format" value="it"/>

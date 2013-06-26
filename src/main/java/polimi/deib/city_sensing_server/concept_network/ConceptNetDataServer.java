@@ -34,6 +34,7 @@ public class ConceptNetDataServer extends ServerResource{
 	@Post
 	public void dataServer(Representation rep) throws IOException {
 
+		logger.debug("Concept network request received");
 		Gson gson = new Gson();
 		Connection connection = null;
 		Statement statement = null;
@@ -109,19 +110,11 @@ public class ConceptNetDataServer extends ServerResource{
 
 			}
 
-			if(resultSet != null || !resultSet.isClosed()){
-				try {
-					resultSet.close();
-				} catch (SQLException e) {
-					logger.error("Error while closing resultset", e);
-				}
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
 			}
-			if(statement != null || !statement.isClosed()){
-				try {
-					statement.close();
-				} catch (SQLException e) {
-					logger.error("Error while closing statement", e);
-				}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
 			}
 
 			sqlQuery = "SELECT HT1.hashtag,HT2.hashtag,COUNT(*) as count " +
@@ -155,6 +148,16 @@ public class ConceptNetDataServer extends ServerResource{
 
 			response.setNodes(nodeList);
 			response.setLinks(linkList);
+			
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
+			if(connection != null && !connection.isClosed()){
+				connection.close();
+			}
 
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
@@ -169,14 +172,6 @@ public class ConceptNetDataServer extends ServerResource{
 			this.getResponse().commit();
 			this.commit();	
 			this.release();
-		} catch (SQLException e) {
-			logger.error("Error while connecting to mysql DB", e);
-			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while connecting to mysql DB");
-			this.getResponse().setEntity(gson.toJson("Error while connecting to mysql DB"), MediaType.APPLICATION_JSON);
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
-
 		} catch (MalformedJsonException e) {
 			logger.error("Error while serializing json, malformed json", e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while serializing json, malformed json");
@@ -184,29 +179,55 @@ public class ConceptNetDataServer extends ServerResource{
 			this.getResponse().commit();
 			this.commit();	
 			this.release();
-
-		} finally {
+		} catch (SQLException e) {
 			try {
 				if(resultSet != null && !resultSet.isClosed()){
 					resultSet.close();
 				}
-			} catch (SQLException e) {
-				logger.error("Error while closing resultset", e);
+			} catch (SQLException e1) {
+				String error = "Error while connecting to mysql DB and while closing resultset";
+				logger.error(error, e1);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
 			}
 			try {
 				if(statement != null && !statement.isClosed()){
 					statement.close();
 				}
-			} catch (SQLException e) {
-				logger.error("Error while closing statement", e);
+			} catch (SQLException e1) {
+				String error = "Error while connecting to mysql DB and while closing statement";
+				logger.error(error, e1);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
 			}
 			try {
 				if(connection != null && !connection.isClosed()){
 					connection.close();
 				}
-			} catch (SQLException e) {
-				logger.error("Error while closing database connection", e);
+			} catch (SQLException e1) {
+				String error = "Error while connecting to mysql DB and while closing database connection";
+				logger.error(error, e1);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
 			}
+
+			String error = "Error while connecting to mysql DB or retrieving data from db";
+			logger.error(error, e);
+			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+			this.getResponse().commit();
+			this.commit();	
+			this.release();
+
 		}
 
 	}

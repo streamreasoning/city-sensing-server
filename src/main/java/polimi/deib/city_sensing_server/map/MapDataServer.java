@@ -37,6 +37,7 @@ public class MapDataServer extends ServerResource{
 	@Post
 	public void dataServer(Representation rep) throws IOException {
 
+		logger.debug("Map request received");
 		Gson gson = new Gson();
 		Connection connection = null;
 		Statement statement = null;
@@ -108,8 +109,12 @@ public class MapDataServer extends ServerResource{
 				next = resultSet.next();
 			}
 
-			resultSet.close();
-			statement.close();
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
 
 			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_call_out WHERE square_id IN (" + cellList + ") AND quarter >= " + mReq.getStart() + " AND quarter <= " + mReq.getEnd() + " GROUP BY square_id ";
 
@@ -143,8 +148,12 @@ public class MapDataServer extends ServerResource{
 				next = resultSet.next();
 			}
 
-			resultSet.close();
-			statement.close();
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
 
 			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_internet WHERE square_id IN (" + cellList + ") AND quarter >= " + mReq.getStart() + " AND quarter <= " + mReq.getEnd() + " GROUP BY square_id ";
 
@@ -178,8 +187,12 @@ public class MapDataServer extends ServerResource{
 				next = resultSet.next();
 			}
 
-			resultSet.close();
-			statement.close();
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
 
 			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_rec_in WHERE square_id IN (" + cellList + ") AND quarter >= " + mReq.getStart() + " AND quarter <= " + mReq.getEnd() + " GROUP BY square_id ";
 
@@ -213,8 +226,12 @@ public class MapDataServer extends ServerResource{
 				next = resultSet.next();
 			}
 
-			resultSet.close();
-			statement.close();
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
 
 			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_rec_out WHERE square_id IN (" + cellList + ") AND quarter >= " + mReq.getStart() + " AND quarter <= " + mReq.getEnd() + " GROUP BY square_id ";
 
@@ -248,8 +265,12 @@ public class MapDataServer extends ServerResource{
 				next = resultSet.next();
 			}
 
-			resultSet.close();
-			statement.close();
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
 
 			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_sms_in WHERE square_id IN (" + cellList + ") AND quarter >= " + mReq.getStart() + " AND quarter <= " + mReq.getEnd() + " GROUP BY square_id ";
 
@@ -283,8 +304,12 @@ public class MapDataServer extends ServerResource{
 				next = resultSet.next();
 			}
 
-			resultSet.close();
-			statement.close();
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
 
 			sqlQuery = "SELECT square_id,quarter,SUM(count) FROM skil_sms_out WHERE square_id IN (" + cellList + ") AND quarter >= " + mReq.getStart() + " AND quarter <= " + mReq.getEnd() + " GROUP BY square_id ";
 
@@ -318,8 +343,12 @@ public class MapDataServer extends ServerResource{
 				next = resultSet.next();
 			}
 
-			resultSet.close();
-			statement.close();
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
 
 			sqlQuery = "SELECT square_id,time_slot,AVG(anomaly_index) FROM anomaly WHERE square_id IN (" + cellList + ") AND time_slot >= " + mReq.getStart() + " AND time_slot <= " + mReq.getEnd() + " GROUP BY square_id ";
 
@@ -353,8 +382,12 @@ public class MapDataServer extends ServerResource{
 				next = resultSet.next();
 			}
 
-			resultSet.close();
-			statement.close();
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
 
 			sqlQuery = "SELECT square_id, SUM(n_tweets) AS social_activity, (SUM(positive_tweets_number) - SUM(negative_tweets_number)) AS social_sentiment, ts_ID " +
 					"FROM INFO_ABOUT_SQUARE_BY_TS " +
@@ -442,6 +475,16 @@ public class MapDataServer extends ServerResource{
 			//			}
 
 			response.setCells(mapCellList);
+			
+			if(resultSet != null && !resultSet.isClosed()){
+				resultSet.close();
+			}
+			if(statement != null && !statement.isClosed()){
+				statement.close();
+			}
+			if(connection != null && !connection.isClosed()){
+				connection.close();
+			}
 
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
@@ -456,14 +499,6 @@ public class MapDataServer extends ServerResource{
 			this.getResponse().commit();
 			this.commit();	
 			this.release();
-		} catch (SQLException e) {
-			logger.error("Error while connecting to mysql DB", e);
-			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while connecting to mysql DB");
-			this.getResponse().setEntity(gson.toJson("Error while connecting to mysql DB"), MediaType.APPLICATION_JSON);
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
-
 		} catch (MalformedJsonException e) {
 			logger.error("Error while serializing json, malformed json", e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while serializing json, malformed json");
@@ -472,28 +507,55 @@ public class MapDataServer extends ServerResource{
 			this.commit();	
 			this.release();
 
-		} finally {
+		} catch (SQLException e) {
 			try {
 				if(resultSet != null && !resultSet.isClosed()){
 					resultSet.close();
 				}
-			} catch (SQLException e) {
-				logger.error("Error while closing resultset", e);
+			} catch (SQLException e1) {
+				String error = "Error while connecting to mysql DB and while closing resultset";
+				logger.error(error, e1);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
 			}
 			try {
 				if(statement != null && !statement.isClosed()){
 					statement.close();
 				}
-			} catch (SQLException e) {
-				logger.error("Error while closing statement", e);
+			} catch (SQLException e1) {
+				String error = "Error while connecting to mysql DB and while closing statement";
+				logger.error(error, e1);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
 			}
 			try {
 				if(connection != null && !connection.isClosed()){
 					connection.close();
 				}
-			} catch (SQLException e) {
-				logger.error("Error while closing database connection", e);
+			} catch (SQLException e1) {
+				String error = "Error while connecting to mysql DB and while closing database connection";
+				logger.error(error, e1);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
 			}
+
+			String error = "Error while connecting to mysql DB or retrieving data from db";
+			logger.error(error, e);
+			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+			this.getResponse().commit();
+			this.commit();	
+			this.release();
+
 		}
 
 	}
