@@ -278,6 +278,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 				connection.close();
 			}
 
+			rep.release();
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
 			this.getResponse().commit();
@@ -285,7 +286,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 			this.release();
 
 		} catch (ClassNotFoundException e) {
-			
+			rep.release();
 			String error = "Error while getting jdbc Driver Class";
 			logger.error(error, e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
@@ -300,6 +301,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 					resultSet.close();
 				}
 			} catch (SQLException e1) {
+				rep.release();
 				String error = "Error while connecting to mysql DB and while closing resultset";
 				logger.error(error, e1);
 				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
@@ -313,6 +315,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 					statement.close();
 				}
 			} catch (SQLException e1) {
+				rep.release();
 				String error = "Error while connecting to mysql DB and while closing statement";
 				logger.error(error, e1);
 				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
@@ -326,6 +329,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 					connection.close();
 				}
 			} catch (SQLException e1) {
+				rep.release();
 				String error = "Error while connecting to mysql DB and while closing database connection";
 				logger.error(error, e1);
 				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
@@ -335,6 +339,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 				this.release();
 			}
 
+			rep.release();
 			String error = "Error while connecting to mysql DB or retrieving data from db";
 			logger.error(error, e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
@@ -343,7 +348,21 @@ public class ConceptFlowsDataServer extends ServerResource{
 			this.commit();	
 			this.release();
 
-		}
+		} catch (Exception e) {
+			rep.release();
+			String error = "Generic Error";
+			logger.error(error, e);
+			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+			this.getResponse().commit();
+			this.commit();	
+			this.release();
+		} finally {
+			rep.release();
+			this.getResponse().commit();
+			this.commit();	
+			this.release();
+		} 
 
 	}
 

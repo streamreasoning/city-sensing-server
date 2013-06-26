@@ -37,7 +37,7 @@ public class ContextTimelineDataServer extends ServerResource{
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Post
 	public void dataServer(Representation rep) throws IOException {
-
+		
 		logger.debug("Context timeline request received");
 		Gson gson = new Gson();
 		Connection connection = null;
@@ -134,7 +134,6 @@ public class ContextTimelineDataServer extends ServerResource{
 			ArrayList<GeneralTimelineStep> stepList = new ArrayList<GeneralTimelineStep>();
 
 
-			long tsInterval = 10800000;
 			//			long firstHistoricalTs = 1365199200000L;
 			//			long startIntervalTS = 0;
 			//			long lastEndIntervalTs = firstHistoricalTs;
@@ -177,7 +176,7 @@ public class ContextTimelineDataServer extends ServerResource{
 				rm = respMap.get(String.valueOf(resultSet.getString(1)).hashCode());
 				if(rm != null){
 					step.setStart(Long.parseLong(resultSet.getString(1)));
-					step.setEnd(Long.parseLong(resultSet.getString(1)) + tsInterval);
+					step.setEnd(Long.parseLong(resultSet.getString(1)) + TSInterval_3h);
 					step.setMobile_anomaly(rm.getAnomaly());
 					step.setSocial_activity(Double.parseDouble(resultSet.getString(2)));
 
@@ -263,7 +262,7 @@ public class ContextTimelineDataServer extends ServerResource{
 			//			}
 
 			response.setSteps(stepList);
-			
+
 			if(resultSet != null && !resultSet.isClosed()){
 				resultSet.close();
 			}
@@ -274,6 +273,7 @@ public class ContextTimelineDataServer extends ServerResource{
 				connection.close();
 			}
 
+			rep.release();
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
 			this.getResponse().commit();
@@ -281,6 +281,7 @@ public class ContextTimelineDataServer extends ServerResource{
 			this.release();
 
 		} catch (ClassNotFoundException e) {
+			rep.release();
 			logger.error("Error while getting jdbc Driver Class", e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while getting jdbc Driver Class");
 			this.getResponse().setEntity(gson.toJson("error"), MediaType.APPLICATION_JSON);
@@ -293,6 +294,7 @@ public class ContextTimelineDataServer extends ServerResource{
 					resultSet.close();
 				}
 			} catch (SQLException e1) {
+				rep.release();
 				String error = "Error while connecting to mysql DB and while closing resultset";
 				logger.error(error, e1);
 				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
@@ -306,6 +308,7 @@ public class ContextTimelineDataServer extends ServerResource{
 					statement.close();
 				}
 			} catch (SQLException e1) {
+				rep.release();
 				String error = "Error while connecting to mysql DB and while closing statement";
 				logger.error(error, e1);
 				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
@@ -319,6 +322,7 @@ public class ContextTimelineDataServer extends ServerResource{
 					connection.close();
 				}
 			} catch (SQLException e1) {
+				rep.release();
 				String error = "Error while connecting to mysql DB and while closing database connection";
 				logger.error(error, e1);
 				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
@@ -328,6 +332,7 @@ public class ContextTimelineDataServer extends ServerResource{
 				this.release();
 			}
 
+			rep.release();
 			String error = "Error while connecting to mysql DB or retrieving data from db";
 			logger.error(error, e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
@@ -336,7 +341,21 @@ public class ContextTimelineDataServer extends ServerResource{
 			this.commit();	
 			this.release();
 
-		}
+		} catch (Exception e) {
+			rep.release();
+			String error = "Generic Error";
+			logger.error(error, e);
+			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+			this.getResponse().commit();
+			this.commit();	
+			this.release();
+		} finally {
+			rep.release();
+			this.getResponse().commit();
+			this.commit();	
+			this.release();
+		} 
 
 	}
 

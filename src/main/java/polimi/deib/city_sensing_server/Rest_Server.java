@@ -20,25 +20,53 @@ import polimi.deib.city_sensing_server.timeline.FocusTimelineDataServer;
 
 
 public class Rest_Server extends Application {
-	
+
 	private static Logger logger = LoggerFactory.getLogger(Rest_Server.class.getName());
 	private static String version = Config.getInstance().getServerVersion();
 
 	public static void main(String[] args) throws Exception{
-		
+
 		Component component = new Component();
 		component.getServers().add(Protocol.HTTP, Config.getInstance().getServerPort());
+
+		component.getContext().getParameters().add("maxThreads", "512");
+		component.getContext().getParameters().add("minThreads", "30");
+		component.getContext().getParameters().add("lowThreads", "145");
+		component.getContext().getParameters().add("maxQueued", "100");
+		component.getContext().getParameters().add("maxTotalConnections", "100");
+		component.getContext().getParameters().add("maxIoIdleTimeMs", "20000");
+		component.getContext().getParameters().add("maxThreadIdleTimeMs", "60000");
+
+		//		component.getServers().getContext().getParameters().add("maxThreads", "512");
+		//		component.getServers().getContext().getParameters().add("minThreads", "30");
+		//		component.getServers().getContext().getParameters().add("lowThreads", "145");
+		//		component.getServers().getContext().getParameters().add("maxQueued", "100");
+		//		component.getServers().getContext().getParameters().add("maxTotalConnections", "100");
+		//		component.getServers().getContext().getParameters().add("maxIoIdleTimeMs", "100");
+		//		component.getServers().getContext().getParameters().add("minThreads", "20"); 
+		//		component.getServers().getContext().getParameters().add("lowThreads", "80"); 
+		//		component.getServers().getContext().getParameters().add("maxThreads", "100"); 
+		//		component.getServers().getContext().getParameters().add("maxQueued", "10"); 
 		component.getClients().add(Protocol.FILE);  
 
 		Rest_Server server = new Rest_Server();
 		component.getDefaultHost().attach("", server);
+
+		logger.debug("Starting city sensing Server with parameters : ");
+		logger.debug("{}", component.getContext().getParameters().getFirst("maxThreads"));
+		logger.debug("{}", component.getContext().getParameters().getFirst("minThreads"));
+		logger.debug("{}", component.getContext().getParameters().getFirst("lowThreads"));
+		logger.debug("{}", component.getContext().getParameters().getFirst("maxQueued"));
+		logger.debug("{}", component.getContext().getParameters().getFirst("maxTotalConnections"));
+		logger.debug("{}", component.getContext().getParameters().getFirst("maxIoIdleTimeMs"));
+		logger.debug("{}", component.getContext().getParameters().getFirst("maxThreadIdleTimeMs"));
 
 		component.getDefaultHost().attach(server); 
 
 		try {
 			component.start();
 		} catch (Exception e) {
-			logger.error("Error while starting Instagram Server", e);
+			logger.error("Error while starting city sensing server", e);
 		}
 
 	}
