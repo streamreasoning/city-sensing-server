@@ -3,10 +3,9 @@ package polimi.deib.city_sensing_server.timeline;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -20,7 +19,7 @@ import org.restlet.util.Series;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import polimi.deib.city_sensing_server.configuration.Config;
+import polimi.deib.city_sensing_server.Rest_Server;
 import polimi.deib.city_sesning_server.utilities.ResponseMapping;
 
 import com.google.gson.Gson;
@@ -41,9 +40,11 @@ public class ContextTimelineDataServer extends ServerResource{
 		logger.debug("Context timeline request received");
 		Gson gson = new Gson();
 		Connection connection = null;
-		Statement statement = null;
 		ResultSet resultSet = null;
 		HashMap<Integer, ResponseMapping> respMap = new HashMap<Integer, ResponseMapping>();
+		
+		PreparedStatement p1 = null;
+		PreparedStatement p2 = null;
 
 		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get("org.restlet.http.headers");
 		if (responseHeaders == null) {
@@ -60,27 +61,34 @@ public class ContextTimelineDataServer extends ServerResource{
 
 			ContextTimelineRequest cReq = gson.fromJson(reader, ContextTimelineRequest.class);
 
-			String cellList = new String();
-
+			ArrayList<Integer> cellList = new ArrayList<Integer>();
+			String prepStmt = new String();
+			
 			if(cReq.getCells() == null || cReq.getCells().size() == 0){
-				for(int i = 1 ; i < 10000 ; i++)
-					cellList = cellList + i + ",";
+				for(int i = 1 ; i < 9999 ; i++){
+					cellList.add(i);
+					prepStmt = prepStmt + "?,";
+				}
 			} else {
-				for(String s : cReq.getCells())
-					cellList = cellList + s + ",";
+				for(String s : cReq.getCells()){
+					cellList.add(Integer.parseInt(s));
+					prepStmt = prepStmt + "?,";
+				}
 			}
 
-			cellList = cellList.substring(0, cellList.length() - 1);
+			prepStmt = prepStmt.substring(0, prepStmt.length() - 1);
 
-			Class.forName("com.mysql.jdbc.Driver");
+//			Class.forName("com.mysql.jdbc.Driver");
+//
+//			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
+			connection = Rest_Server.bds.getConnection();
+			connection.setAutoCommit(false);
 
-			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
+			String sqlQuery = "SELECT square_id,time_slot,AVG(anomaly_index) FROM anomaly WHERE square_id IN (" + prepStmt + ") GROUP BY time_slot ";
 
-			String sqlQuery = "SELECT square_id,time_slot,AVG(anomaly_index) FROM anomaly WHERE square_id IN (" + cellList + ") GROUP BY time_slot ";
-
-			statement = connection.createStatement();
-
-			resultSet = statement.executeQuery(sqlQuery);
+			p1 = connection.prepareStatement(sqlQuery);
+			insertValues(p1, 1, cellList);
+			resultSet = p1.executeQuery();
 
 			ResponseMapping rm;
 			String key;
@@ -114,18 +122,15 @@ public class ContextTimelineDataServer extends ServerResource{
 			if(resultSet != null && !resultSet.isClosed()){
 				resultSet.close();
 			}
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
-
+		
 			sqlQuery = "SELECT 3h_ts_id,SUM(n_tweets) AS social_activity " +
 					"FROM INFO_ABOUT_SQUARE_BY_TS " +
-					"WHERE square_ID IN (" + cellList + ") " +
+					"WHERE square_ID IN (" + prepStmt + ") " +
 					"GROUP BY 3h_ts_id";
 
-			statement = connection.createStatement();
-
-			resultSet = statement.executeQuery(sqlQuery);
+			p2 = connection.prepareStatement(sqlQuery);
+			insertValues(p2, 1, cellList);
+			resultSet = p2.executeQuery();
 
 			next = resultSet.next();
 
@@ -266,13 +271,8 @@ public class ContextTimelineDataServer extends ServerResource{
 			if(resultSet != null && !resultSet.isClosed()){
 				resultSet.close();
 			}
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
-			if(connection != null && !connection.isClosed()){
-				connection.close();
-			}
 
+			connection.commit();
 			rep.release();
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
@@ -280,58 +280,27 @@ public class ContextTimelineDataServer extends ServerResource{
 			this.commit();	
 			this.release();
 
-		} catch (ClassNotFoundException e) {
-			rep.release();
-			logger.error("Error while getting jdbc Driver Class", e);
-			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while getting jdbc Driver Class");
-			this.getResponse().setEntity(gson.toJson("error"), MediaType.APPLICATION_JSON);
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
-		} catch (SQLException e) {
-			try {
-				if(resultSet != null && !resultSet.isClosed()){
-					resultSet.close();
-				}
-			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing resultset";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
-			}
-			try {
-				if(statement != null && !statement.isClosed()){
-					statement.close();
-				}
-			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing statement";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
-			}
+		} 
+//		catch (ClassNotFoundException e) {
+//			rep.release();
+//			String error = "Error while getting jdbc Driver Class";
+//			logger.error(error, e);
+//			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+//			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+//			this.getResponse().commit();
+//			this.commit();	
+//			this.release();
+//
+//		} 
+		catch (SQLException e) {
 			try {
 				if(connection != null && !connection.isClosed()){
+					connection.rollback();
 					connection.close();
 				}
 			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing database connection";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
+				logger.error("Error during rollback operation");
 			}
-
 			rep.release();
 			String error = "Error while connecting to mysql DB or retrieving data from db";
 			logger.error(error, e);
@@ -342,8 +311,16 @@ public class ContextTimelineDataServer extends ServerResource{
 			this.release();
 
 		} catch (Exception e) {
+			try {
+				if(connection != null && !connection.isClosed()){
+					connection.rollback();
+					connection.close();
+				}
+			} catch (SQLException e1) {
+				logger.error("Error during rollback operation");
+			}
 			rep.release();
-			String error = "Generic Error";
+			String error = "Server error or malformed input parameters";
 			logger.error(error, e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
 			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
@@ -352,9 +329,23 @@ public class ContextTimelineDataServer extends ServerResource{
 			this.release();
 		} finally {
 			rep.release();
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
+			try {
+				if(p1 != null && !p1.isClosed()){ p1.close();}
+				if(p2 != null && !p2.isClosed()){ p2.close();}
+				if(connection != null && !connection.isClosed()){
+					connection.rollback();
+					connection.close();
+				}
+			} catch (SQLException e) {
+				rep.release();
+				String error = "Error while connecting to mysql DB and while closing resultset";
+				logger.error(error, e);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
+			}
 		} 
 
 	}
@@ -369,6 +360,25 @@ public class ContextTimelineDataServer extends ServerResource{
 			return -1;
 		}
 		return ts_ID;
+	}
+	
+	private int insertValues(PreparedStatement st, int startIndex, ArrayList<Integer> cellList){
+
+		int i = 0;
+		int j = 0;
+		for(i = startIndex ; i< startIndex + cellList.size() ; i++){
+			try {
+				st.setInt(i, cellList.get(j));
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			j++;
+		}
+
+		return i - 1;
+
 	}
 
 }

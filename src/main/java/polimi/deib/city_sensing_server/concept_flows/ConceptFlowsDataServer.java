@@ -3,10 +3,9 @@ package polimi.deib.city_sensing_server.concept_flows;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 
 import org.restlet.data.MediaType;
@@ -19,7 +18,7 @@ import org.restlet.util.Series;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import polimi.deib.city_sensing_server.configuration.Config;
+import polimi.deib.city_sensing_server.Rest_Server;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -40,13 +39,19 @@ public class ConceptFlowsDataServer extends ServerResource{
 		.create();
 
 		Connection connection = null;
-		Statement statement = null;
 		ResultSet resultSet = null;
+
+		PreparedStatement p1 = null;
+		PreparedStatement p2 = null;
+		PreparedStatement p3 = null;
+		PreparedStatement p4 = null;
+		PreparedStatement p5 = null;
 
 		ConceptFlowsNode node;
 		ConceptFlowsLink link;
 		ArrayList<ConceptFlowsNode> nodeList = new ArrayList<ConceptFlowsNode>();
 		ArrayList<ConceptFlowsLink> linkList = new ArrayList<ConceptFlowsLink>();
+		int lastIndex = 0;
 
 		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get("org.restlet.http.headers");
 		if (responseHeaders == null) {
@@ -63,7 +68,9 @@ public class ConceptFlowsDataServer extends ServerResource{
 
 			ConceptFlowsRequest cReq = gson.fromJson(reader, ConceptFlowsRequest.class);
 
-			String cellList = new String();
+			//			String cellList = new String();
+			ArrayList<Integer> cellList = new ArrayList<Integer>();
+			String prepStmt = new String();
 
 			if(cReq.getStart() == null || Long.parseLong(cReq.getStart()) < 0){
 				cReq.setStart("1365199200000");
@@ -72,65 +79,34 @@ public class ConceptFlowsDataServer extends ServerResource{
 				cReq.setEnd("1366927200000");
 			}
 			if(cReq.getCells() == null || cReq.getCells().size() == 0){
-				for(int i = 1 ; i < 10000 ; i++)
-					cellList = cellList + i + ",";
+				for(int i = 1 ; i < 9999 ; i++){
+					cellList.add(i);
+					prepStmt = prepStmt + "?,";
+				}
 			} else {
-				for(String s : cReq.getCells())
-					cellList = cellList + s + ",";
+				for(String s : cReq.getCells()){
+					cellList.add(Integer.parseInt(s));
+					prepStmt = prepStmt + "?,";
+				}
 			}
 
-			cellList = cellList.substring(0, cellList.length() - 1);
+			prepStmt = prepStmt.substring(0, prepStmt.length() - 1);
 
-			Class.forName("com.mysql.jdbc.Driver");
+//			Class.forName("com.mysql.jdbc.Driver");
 
-			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
+//			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
 
-			String sqlQuery = "CREATE OR REPLACE VIEW `foursquare_cat_in_square` AS " +
-					"SELECT DISTINCT FOURSQUARE_CAT.name AS name, VENUE.venue_square_ID AS square_ID " +
+			connection = Rest_Server.bds.getConnection();
+			connection.setAutoCommit(false);
+
+			String sqlQuery = "SELECT FOURSQUARE_CAT.name AS name " +
 					"FROM FOURSQUARE_CAT,VENUE_FOURSQUARE,VENUE " +
-					"WHERE VENUE.venue_square_ID in (" + cellList + ") AND " +
+					"WHERE VENUE.venue_square_ID in (" + prepStmt + ") AND " +
 					"VENUE_FOURSQUARE.venue_fsq_ID = VENUE.venue_ID AND VENUE_FOURSQUARE.fsq_cat_ID = FOURSQUARE_CAT.fsq_cat_ID";
 
-			statement = connection.createStatement();
-
-			statement.executeUpdate(sqlQuery);
-
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
-
-			sqlQuery = "CREATE OR REPLACE VIEW `fuorisalone_cat_in_square` AS " +
-					"SELECT DISTINCT FUORISALONE_CAT.name AS name, VENUE.venue_square_ID AS square_ID " +
-					"FROM FUORISALONE_CAT,VENUE,EVENT " +
-					"WHERE VENUE.venue_square_ID in (" + cellList + ") " +
-					"AND VENUE.venue_ID = EVENT.event_venue_ID AND " +
-					"EVENT.event_fs_cat_ID = FUORISALONE_CAT.fs_cat_ID";
-
-			statement = connection.createStatement();
-
-			statement.executeUpdate(sqlQuery);
-
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
-
-			sqlQuery = "CREATE OR REPLACE VIEW `hashtag_in_square_by_ts` AS " +
-					"SELECT DISTINCT hashtag, ht_square_ID, ht_ts_ID " +
-					"FROM HASHTAG_SQUARE " +
-					"WHERE ht_square_ID in (" + cellList + ") AND ht_ts_ID >=" + cReq.getStart() + " AND ht_ts_ID <=" + cReq.getEnd();
-
-			statement = connection.createStatement();
-
-			statement.executeUpdate(sqlQuery);
-
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
-
-			sqlQuery = "SELECT name " +
-					"FROM foursquare_cat_in_square ";
-			statement = connection.createStatement();
-			resultSet = statement.executeQuery(sqlQuery);
+			p1 = connection.prepareStatement(sqlQuery);
+			lastIndex = insertValues(p1, 1, cellList);
+			resultSet= p1.executeQuery();
 
 			boolean next = resultSet.next();
 
@@ -150,14 +126,15 @@ public class ConceptFlowsDataServer extends ServerResource{
 			if(resultSet != null && !resultSet.isClosed()){
 				resultSet.close();
 			}
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
 
-			sqlQuery = "SELECT name " +
-					"FROM fuorisalone_cat_in_square ";
-			statement = connection.createStatement();
-			resultSet = statement.executeQuery(sqlQuery);
+			sqlQuery = "SELECT FUORISALONE_CAT.name AS name " +
+					"FROM FUORISALONE_CAT,VENUE,EVENT " +
+					"WHERE VENUE.venue_square_ID in (" + prepStmt + ") " +
+					"AND VENUE.venue_ID = EVENT.event_venue_ID AND " +
+					"EVENT.event_fs_cat_ID = FUORISALONE_CAT.fs_cat_ID";
+			p2 = connection.prepareStatement(sqlQuery);
+			lastIndex = insertValues(p2, 1, cellList);
+			resultSet= p2.executeQuery();
 
 			next = resultSet.next();
 
@@ -177,14 +154,15 @@ public class ConceptFlowsDataServer extends ServerResource{
 			if(resultSet != null && !resultSet.isClosed()){
 				resultSet.close();
 			}
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
 
-			sqlQuery = "SELECT hashtag " +
-					"FROM hashtag_in_square_by_ts ";
-			statement = connection.createStatement();
-			resultSet = statement.executeQuery(sqlQuery);
+			sqlQuery = "SELECT hashtag, ht_square_ID, ht_ts_ID " +
+					"FROM HASHTAG_SQUARE " +
+					"WHERE ht_square_ID in (" + prepStmt + ") AND ht_ts_ID >=? AND ht_ts_ID <=?";
+			p3 = connection.prepareStatement(sqlQuery);
+			lastIndex = insertValues(p3, 1, cellList);
+			p3.setObject(lastIndex + 1, Long.parseLong(cReq.getStart()));
+			p3.setObject(lastIndex + 2, Long.parseLong(cReq.getEnd()));
+			resultSet= p3.executeQuery();
 
 			next = resultSet.next();
 
@@ -205,17 +183,16 @@ public class ConceptFlowsDataServer extends ServerResource{
 			if(resultSet != null && !resultSet.isClosed()){
 				resultSet.close();
 			}
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
 
 			sqlQuery = "SELECT c1.name as fuorisalone_cat_name,c2.name as foursquare_cat_name,COUNT(*) as count " +
 					"FROM fuorisalone_cat_in_square as c1, foursquare_cat_in_square as c2 " +
-					"WHERE c1.square_ID IN (" + cellList + ") AND c2.square_ID IN (" + cellList + ") " +
+					"WHERE c1.square_ID IN (" + prepStmt + ") AND c2.square_ID IN (" + prepStmt + ") " +
 					"GROUP BY c1.name,c2.name " +
 					"ORDER BY count";
-			statement = connection.createStatement();
-			resultSet = statement.executeQuery(sqlQuery);
+			p4 = connection.prepareStatement(sqlQuery);
+			lastIndex = insertValues(p4, 1, cellList);
+			lastIndex = insertValues(p4, lastIndex + 1, cellList);
+			resultSet= p4.executeQuery();
 
 			next = resultSet.next();
 
@@ -235,18 +212,19 @@ public class ConceptFlowsDataServer extends ServerResource{
 			if(resultSet != null && !resultSet.isClosed()){
 				resultSet.close();
 			}
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
 
 			sqlQuery = "SELECT c1.name as fuorisalone_cat_name,h2.hashtag,COUNT(*) as count " +
 					"FROM fuorisalone_cat_in_square as c1, hashtag_in_square_by_ts as h2 " +
-					"WHERE c1.square_ID IN (" + cellList + ") AND h2.ht_square_ID IN (" + cellList + ") AND " +
-					"h2.ht_ts_ID >=" + cReq.getStart() + " AND h2.ht_ts_ID <=" + cReq.getEnd()  + " " +
+					"WHERE c1.square_ID IN (" + prepStmt + ") AND h2.ht_square_ID IN (" + prepStmt + ") AND " +
+					"h2.ht_ts_ID >=? AND h2.ht_ts_ID <=? " +
 					"GROUP BY c1.name,h2.hashtag " +
 					"ORDER BY count";
-			statement = connection.createStatement();
-			resultSet = statement.executeQuery(sqlQuery);
+			p5 = connection.prepareStatement(sqlQuery);
+			lastIndex = insertValues(p5, 1, cellList);
+			lastIndex = insertValues(p5, lastIndex + 1, cellList);
+			p5.setObject(lastIndex + 1, Long.parseLong(cReq.getStart()));
+			p5.setObject(lastIndex + 2, Long.parseLong(cReq.getEnd()));
+			resultSet= p5.executeQuery();
 
 			next = resultSet.next();
 
@@ -267,17 +245,7 @@ public class ConceptFlowsDataServer extends ServerResource{
 			response.setNodes(nodeList);
 			response.setLinks(linkList);
 
-
-			if(resultSet != null && !resultSet.isClosed()){
-				resultSet.close();
-			}
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
-			if(connection != null && !connection.isClosed()){
-				connection.close();
-			}
-
+			connection.commit();
 			rep.release();
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
@@ -285,60 +253,28 @@ public class ConceptFlowsDataServer extends ServerResource{
 			this.commit();	
 			this.release();
 
-		} catch (ClassNotFoundException e) {
-			rep.release();
-			String error = "Error while getting jdbc Driver Class";
-			logger.error(error, e);
-			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
+		} 
+//		catch (ClassNotFoundException e) {
+//			rep.release();
+//			String error = "Error while getting jdbc Driver Class";
+//			logger.error(error, e);
+//			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+//			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+//			this.getResponse().commit();
+//			this.commit();	
+//			this.release();
+//
+//		} 
+		catch (SQLException e) {
 			
-		} catch (SQLException e) {
-			try {
-				if(resultSet != null && !resultSet.isClosed()){
-					resultSet.close();
-				}
-			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing resultset";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
-			}
-			try {
-				if(statement != null && !statement.isClosed()){
-					statement.close();
-				}
-			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing statement";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
-			}
 			try {
 				if(connection != null && !connection.isClosed()){
+					connection.rollback();
 					connection.close();
 				}
 			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing database connection";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
+				logger.error("Error during rollback operation");
 			}
-
 			rep.release();
 			String error = "Error while connecting to mysql DB or retrieving data from db";
 			logger.error(error, e);
@@ -349,8 +285,16 @@ public class ConceptFlowsDataServer extends ServerResource{
 			this.release();
 
 		} catch (Exception e) {
+			try {
+				if(connection != null && !connection.isClosed()){
+					connection.rollback();
+					connection.close();
+				}
+			} catch (SQLException e1) {
+				logger.error("Error during rollback operation");
+			}
 			rep.release();
-			String error = "Generic Error";
+			String error = "Server error or malformed input parameters";
 			logger.error(error, e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
 			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
@@ -359,10 +303,45 @@ public class ConceptFlowsDataServer extends ServerResource{
 			this.release();
 		} finally {
 			rep.release();
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
+			try {
+				if(p1 != null && !p1.isClosed()){ p1.close();}
+				if(p2 != null && !p2.isClosed()){ p2.close();}
+				if(p3 != null && !p3.isClosed()){ p3.close();}
+				if(p4 != null && !p4.isClosed()){ p4.close();}
+				if(p5 != null && !p5.isClosed()){ p5.close();}
+				if(connection != null && !connection.isClosed()){
+					connection.close();
+				}
+			} catch (SQLException e) {
+				rep.release();
+				String error = "Error while connecting to mysql DB and while closing resultset";
+				logger.error(error, e);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
+			}
 		} 
+
+	}
+
+	private int insertValues(PreparedStatement st, int startIndex, ArrayList<Integer> cellList){
+
+		int i = 0;
+		int j = 0;
+		for(i = startIndex ; i< startIndex + cellList.size() ; i++){
+			try {
+				st.setInt(i, cellList.get(j));
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			j++;
+		}
+
+		return i - 1;
 
 	}
 

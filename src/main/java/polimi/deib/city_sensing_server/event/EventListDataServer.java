@@ -3,10 +3,9 @@ package polimi.deib.city_sensing_server.event;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 
 import org.restlet.data.MediaType;
@@ -19,12 +18,10 @@ import org.restlet.util.Series;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import polimi.deib.city_sensing_server.configuration.Config;
+import polimi.deib.city_sensing_server.Rest_Server;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.MalformedJsonException;
-
 
 public class EventListDataServer extends ServerResource{
 
@@ -37,11 +34,10 @@ public class EventListDataServer extends ServerResource{
 		logger.debug("Event List request received");
 		Gson gson = new Gson();
 		Connection connection = null;
-		Statement statement = null;
-		Statement statement2 = null;
+		PreparedStatement p1 = null;
+		PreparedStatement p2 = null;
 		ResultSet resultSet = null;
 		ResultSet innerResultSet = null;
-
 
 		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get("org.restlet.http.headers");
 		if (responseHeaders == null) {
@@ -58,8 +54,9 @@ public class EventListDataServer extends ServerResource{
 
 			EventListRequest mReq = gson.fromJson(reader, EventListRequest.class);
 
-			String cellList = new String();
-
+			ArrayList<Integer> cellList = new ArrayList<Integer>();
+			String prepStmt = new String();
+			
 			if(mReq.getStart() == null || Long.parseLong(mReq.getStart()) < 0){
 				mReq.setStart("1365199200000");
 			}
@@ -67,27 +64,42 @@ public class EventListDataServer extends ServerResource{
 				mReq.setEnd("1366927200000");
 			}
 			if(mReq.getCells() == null || mReq.getCells().size() == 0){
-				for(int i = 1 ; i < 10000 ; i++)
-					cellList = cellList + i + ",";
+				for(int i = 1 ; i < 9999 ; i++){
+					cellList.add(i);
+					prepStmt = prepStmt + "?,";
+				}
 			} else {
-				for(String s : mReq.getCells())
-					cellList = cellList + s + ",";
+				for(String s : mReq.getCells()){
+					cellList.add(Integer.parseInt(s));
+					prepStmt = prepStmt + "?,";
+				}
 			}
 
-			cellList = cellList.substring(0, cellList.length() - 1);
+			prepStmt = prepStmt.substring(0, prepStmt.length() - 1);
 
-			String sqlQuery = "SELECT EVENT.event_ID, EVENT.name, VENUE.address, EVENT.start_date, EVENT.end_date, EVENT.link, EVENT.venue_ID " +
+			String sqlQuery = "SELECT EVENT.event_ID, EVENT.name, VENUE.address, EVENT.start_date, EVENT.end_date, EVENT.link, EVENT.event_venue_ID " +
 					"FROM EVENT,VENUE " +
-					"WHERE event_venue_ID = venue_ID AND ( start_date >= " + mReq.getStart() + " OR end_date <= " + mReq.getEnd() + " ) AND " +
-					"venue_square_ID IN  (" + cellList + ") ";
+					"WHERE event_venue_ID = venue_ID AND ( start_date >= ? OR end_date <= ? ) AND " +
+					"venue_square_ID IN  (" + prepStmt + ") ";
 
-			Class.forName("com.mysql.jdbc.Driver");
+//			Class.forName("com.mysql.jdbc.Driver");
+//
+//			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
 
-			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
+			connection = Rest_Server.bds.getConnection();
+			connection.setAutoCommit(false);
 
-			statement = connection.createStatement();
+			p1 = connection.prepareStatement(sqlQuery);
+			p1.setObject(1, Long.parseLong(mReq.getStart()));
+			p1.setObject(2, Long.parseLong(mReq.getEnd()));
+			insertValues(p1, 3, cellList);
+			resultSet = p1.executeQuery();
+			
+			sqlQuery = "SELECT event_fs_cat_ID, FUORISALONE_CAT.name " +
+					"FROM EVENT, FUORISALONE_CAT " +
+					"WHERE EVENT.event_fs_cat_ID = FUORISALONE_CAT.fs_cat_ID AND EVENT.event_fs_cat_ID = ?";
+			p2 = connection.prepareStatement(sqlQuery);
 
-			resultSet = statement.executeQuery(sqlQuery);
 
 			boolean next = resultSet.next();
 			boolean innerNext;
@@ -116,13 +128,9 @@ public class EventListDataServer extends ServerResource{
 				event.setDate(dateList);
 				event.setLink(resultSet.getString(6));
 
-				sqlQuery = "SELECT event_fs_cat_ID, FUORISALONE_CAT.name" +
-						"FROM EVENT, FUORISALONE_CAT " +
-						"WHERE EVENT.event_fs_cat_ID = FUORISALONE_CAT.fs_cat_ID AND EVENT.event_fs_cat_ID = " + resultSet.getString(7);
+				p2.setObject(1, Integer.parseInt(resultSet.getString(7)));
 
-				statement2 = connection.createStatement();
-
-				innerResultSet = statement2.executeQuery(sqlQuery);
+				innerResultSet = p2.executeQuery();
 
 				innerNext = innerResultSet.next();
 
@@ -143,9 +151,6 @@ public class EventListDataServer extends ServerResource{
 
 				eventList.add(event);
 
-				if(statement2 != null && !statement2.isClosed()){
-					statement2.close();
-				}
 				if(innerResultSet != null && !innerResultSet.isClosed()){
 					innerResultSet.close();
 				}
@@ -159,19 +164,8 @@ public class EventListDataServer extends ServerResource{
 			if(resultSet != null && !resultSet.isClosed()){
 				resultSet.close();
 			}
-			if(innerResultSet != null && !innerResultSet.isClosed()){
-				innerResultSet.close();
-			}
-			if(statement != null && !statement.isClosed()){
-				statement.close();
-			}
-			if(statement2 != null && !statement2.isClosed()){
-				statement2.close();
-			}
-			if(connection != null && !connection.isClosed()){
-				connection.close();
-			}
 
+			connection.commit();
 			rep.release();
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(gson.toJson(response), MediaType.APPLICATION_JSON);
@@ -179,95 +173,27 @@ public class EventListDataServer extends ServerResource{
 			this.commit();	
 			this.release();
 
-		} catch (ClassNotFoundException e) {
-			rep.release();
-			logger.error("Error while getting jdbc Driver Class", e);
-			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while getting jdbc Driver Class");
-			this.getResponse().setEntity(gson.toJson("Error while getting jdbc Driver Class"), MediaType.APPLICATION_JSON);
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
-		} catch (MalformedJsonException e) {
-			rep.release();
-			logger.error("Error while serializing json, malformed json", e);
-			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, "Error while serializing json, malformed json");
-			this.getResponse().setEntity(gson.toJson("Error while serializing json, malformed json"), MediaType.APPLICATION_JSON);
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
-
-		} catch (SQLException e) {
-			try {
-				if(resultSet != null && !resultSet.isClosed()){
-					resultSet.close();
-				}
-			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing resultset";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
-			}
-			try {
-				if(innerResultSet != null && !innerResultSet.isClosed()){
-					innerResultSet.close();
-				}
-			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing resultset";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
-			}
-			try {
-				if(statement != null && !statement.isClosed()){
-					statement.close();
-				}
-			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing statement";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
-			}
-			try {
-				if(statement2 != null && !statement2.isClosed()){
-					statement2.close();
-				}
-			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing statement";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
-			}
+		} 
+//		catch (ClassNotFoundException e) {
+//			rep.release();
+//			String error = "Error while getting jdbc Driver Class";
+//			logger.error(error, e);
+//			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+//			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+//			this.getResponse().commit();
+//			this.commit();	
+//			this.release();
+//
+//		} 
+		catch (SQLException e) {
 			try {
 				if(connection != null && !connection.isClosed()){
+					connection.rollback();
 					connection.close();
 				}
 			} catch (SQLException e1) {
-				rep.release();
-				String error = "Error while connecting to mysql DB and while closing database connection";
-				logger.error(error, e1);
-				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
-				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
-				this.getResponse().commit();
-				this.commit();	
-				this.release();
+				logger.error("Error during rollback operation");
 			}
-
 			rep.release();
 			String error = "Error while connecting to mysql DB or retrieving data from db";
 			logger.error(error, e);
@@ -278,8 +204,16 @@ public class EventListDataServer extends ServerResource{
 			this.release();
 
 		} catch (Exception e) {
+			try {
+				if(connection != null && !connection.isClosed()){
+					connection.rollback();
+					connection.close();
+				}
+			} catch (SQLException e1) {
+				logger.error("Error during rollback operation");
+			}
 			rep.release();
-			String error = "Generic Error";
+			String error = "Server error or malformed input parameters";
 			logger.error(error, e);
 			this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
 			this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
@@ -288,10 +222,43 @@ public class EventListDataServer extends ServerResource{
 			this.release();
 		} finally {
 			rep.release();
-			this.getResponse().commit();
-			this.commit();	
-			this.release();
+			try {
+				if(p1 != null && !p1.isClosed()){ p1.close();}
+				if(p2 != null && !p2.isClosed()){ p2.close();}
+				if(connection != null && !connection.isClosed()){
+					connection.rollback();
+					connection.close();
+				}
+			} catch (SQLException e) {
+				rep.release();
+				String error = "Error while connecting to mysql DB and while closing resultset";
+				logger.error(error, e);
+				this.getResponse().setStatus(Status.SERVER_ERROR_INTERNAL, error);
+				this.getResponse().setEntity(gson.toJson(error), MediaType.APPLICATION_JSON);
+				this.getResponse().commit();
+				this.commit();	
+				this.release();
+			}
+		} 
+
+	}
+	
+	private int insertValues(PreparedStatement st, int startIndex, ArrayList<Integer> cellList){
+
+		int i = 0;
+		int j = 0;
+		for(i = startIndex ; i< startIndex + cellList.size() ; i++){
+			try {
+				st.setInt(i, cellList.get(j));
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			j++;
 		}
+
+		return i - 1;
 
 	}
 

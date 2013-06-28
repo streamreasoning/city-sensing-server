@@ -1,5 +1,11 @@
 package polimi.deib.city_sensing_server;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+import org.apache.commons.dbcp.BasicDataSource;
 import org.restlet.Application;
 import org.restlet.Component;
 import org.restlet.Restlet;
@@ -24,6 +30,8 @@ public class Rest_Server extends Application {
 	private static Logger logger = LoggerFactory.getLogger(Rest_Server.class.getName());
 	private static String version = Config.getInstance().getServerVersion();
 
+	public static BasicDataSource bds;
+
 	public static void main(String[] args) throws Exception{
 
 		Component component = new Component();
@@ -36,6 +44,12 @@ public class Rest_Server extends Application {
 		component.getContext().getParameters().add("maxTotalConnections", "100");
 		component.getContext().getParameters().add("maxIoIdleTimeMs", "20000");
 		component.getContext().getParameters().add("maxThreadIdleTimeMs", "60000");
+
+		bds = new BasicDataSource();
+		bds.setDriverClassName("com.mysql.jdbc.Driver");
+		bds.setUrl("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname());
+		bds.setUsername( Config.getInstance().getMysqlUser());
+		bds.setPassword(Config.getInstance().getMysqlPwd());
 
 		//		component.getServers().getContext().getParameters().add("maxThreads", "512");
 		//		component.getServers().getContext().getParameters().add("minThreads", "30");
@@ -61,13 +75,66 @@ public class Rest_Server extends Application {
 		logger.debug("{}", component.getContext().getParameters().getFirst("maxIoIdleTimeMs"));
 		logger.debug("{}", component.getContext().getParameters().getFirst("maxThreadIdleTimeMs"));
 
-		component.getDefaultHost().attach(server); 
+		Connection connection = null;
+		PreparedStatement p1 = null;
+		PreparedStatement p2 = null;
+		PreparedStatement p3 = null;
 
-		try {
+
+		try{
+
+//			Class.forName("com.mysql.jdbc.Driver");
+//
+//			connection = DriverManager.getConnection("jdbc:mysql://" + Config.getInstance().getMysqlAddress() + "/" + Config.getInstance().getMysqldbname() + "?user=" + Config.getInstance().getMysqlUser() + "&password=" + Config.getInstance().getMysqlPwd());
+
+			connection = Rest_Server.bds.getConnection();
+			connection.setAutoCommit(false);
+
+			String sqlQuery = "CREATE OR REPLACE VIEW `foursquare_cat_in_square` AS " +
+					"SELECT DISTINCT FOURSQUARE_CAT.name AS name, VENUE.venue_square_ID AS square_ID " +
+					"FROM FOURSQUARE_CAT,VENUE_FOURSQUARE,VENUE " +
+					"WHERE VENUE_FOURSQUARE.venue_fsq_ID = VENUE.venue_ID AND VENUE_FOURSQUARE.fsq_cat_ID = FOURSQUARE_CAT.fsq_cat_ID";
+
+			p1 = connection.prepareStatement(sqlQuery);
+
+			p1.executeUpdate();
+
+			sqlQuery = "CREATE OR REPLACE VIEW `fuorisalone_cat_in_square` AS " +
+					"SELECT DISTINCT FUORISALONE_CAT.name AS name, VENUE.venue_square_ID AS square_ID " +
+					"FROM FUORISALONE_CAT,VENUE,EVENT " +
+					"WHERE VENUE.venue_ID = EVENT.event_venue_ID AND " +
+					"EVENT.event_fs_cat_ID = FUORISALONE_CAT.fs_cat_ID";
+
+			p2 = connection.prepareStatement(sqlQuery);
+
+			p2.executeUpdate();
+
+			sqlQuery = "CREATE OR REPLACE VIEW `hashtag_in_square_by_ts` AS " +
+					"SELECT DISTINCT hashtag, ht_square_ID, ht_ts_ID " +
+					"FROM HASHTAG_SQUARE ";
+
+			p3 = connection.prepareStatement(sqlQuery);
+
+			p3.executeUpdate();
+
+			connection.commit();
+
+			component.getDefaultHost().attach(server); 
+
 			component.start();
+
+
+		} catch(SQLException e) { 
+			connection.rollback();
 		} catch (Exception e) {
 			logger.error("Error while starting city sensing server", e);
+		} finally {
+			if(p1 != null){ p1.close();}
+			if(p2 != null){ p2.close();}
+			if(p3 != null){ p3.close();}
+			if(connection != null){connection.close();}
 		}
+
 
 	}
 
