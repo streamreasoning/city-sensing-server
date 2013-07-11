@@ -3,7 +3,7 @@
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
 			<pattern>
-				%date{dd MMM yyyy;HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+				%date{dd MMM yyyy;HH:mm:ss.SSS} [%thread] %-5level - %logger{36} - %msg%n
 			</pattern>
 		</encoder>
 	</appender>
@@ -15,7 +15,7 @@
 		</filter>
 		<encoder>
 			<pattern>
-				%date{dd MMM yyyy;HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+				%date{dd MMM yyyy;HH:mm:ss.SSS} [%thread] %-5level - %logger{36} - %msg%n
 			</pattern>
 		</encoder>
 	</appender>
@@ -27,7 +27,7 @@
 		</filter>
 		<encoder>
 			<pattern>
-				%date{dd MMM yyyy;HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+				%date{dd MMM yyyy;HH:mm:ss.SSS} [%thread] %-5level - %logger{36} - %msg%n
 			</pattern>
 		</encoder>
 	</appender>

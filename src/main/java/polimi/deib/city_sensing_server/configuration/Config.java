@@ -20,7 +20,7 @@ public class Config {
 			logger.error("Error while reading the configuration file", e);
 		}
 	}
-	
+		
 	public String getServerVersion(){
 		return config.getString("city_sensing_server.version");
 	}
@@ -28,6 +28,8 @@ public class Config {
 	public int getServerPort(){
 		return config.getInt("city_sensing_server.port");
 	}
+	
+	//MysqlServer Parameters
 	
 	public String getMysqlAddress(){
 		return config.getString("mysql.address");
@@ -44,7 +46,40 @@ public class Config {
 	public String getMysqlPwd(){
 		return config.getString("mysql.password");
 	}	
+	
+	public boolean getCreateViewOnDB(){
+		return Boolean.parseBoolean(config.getString("city_sensing_server.createviewondb"));
+	}
+	
+//	public int getMaxActiveConnectionNumber(){
+//		return config.getInt("mysql.maxactiveconnectionnumber");
+//	}
+//	
+//	public int getMaxIdleConnectionNumber(){
+//		return config.getInt("mysql.maxidleconnectionnumber");
+//	}
+	
+	// ConnectionPool Paramters
+	
+	public int getacquireIncrement(){
+		return config.getInt("connection_pool.acquireIncrement");
+	}
+	
+	public int getInitialPoolSize(){
+		return config.getInt("connection_pool.initialPoolSize");
+	}
 			
+	public int getMaxPoolSize(){
+		return config.getInt("connection_pool.maxPoolSize");
+	}
+	
+	public int getMinPoolSize(){
+		return config.getInt("connection_pool.minPoolSize");
+	}
+	
+	public int getMaxStatements(){
+		return config.getInt("connection_pool.maxStatements");
+	}
 	public static Config getInstance(){
 		if(_instance==null)
 			_instance=new Config();

@@ -1,6 +1,7 @@
 package polimi.deib.city_sensing_server.concept_flows;
 
-public class ConceptFlowsLink {
+
+public class ConceptFlowsLink  implements Comparable<ConceptFlowsLink> {
 	
 	private String source;
 	private String target;
@@ -23,6 +24,14 @@ public class ConceptFlowsLink {
 	}
 	public void setValue(double value) {
 		this.value = value;
+	}
+	
+	public int compareTo(ConceptFlowsLink o) {
+		if(o.value < value)
+			return -1;
+		else if(o.value > value)
+			return 1;
+		return 0;
 	}
 	
 }

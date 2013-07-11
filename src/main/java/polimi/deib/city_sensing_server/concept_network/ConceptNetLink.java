@@ -1,6 +1,6 @@
 package polimi.deib.city_sensing_server.concept_network;
 
-public class ConceptNetLink {
+public class ConceptNetLink implements Comparable<ConceptNetLink>{
 	
 	private String source;
 	private String target;
@@ -23,6 +23,14 @@ public class ConceptNetLink {
 	}
 	public void setValue(double value) {
 		this.value = value;
+	}
+	
+	public int compareTo(ConceptNetLink o) {
+		if(o.value < value)
+			return -1;
+		else if(o.value > value)
+			return 1;
+		return 0;
 	}
 	
 }
