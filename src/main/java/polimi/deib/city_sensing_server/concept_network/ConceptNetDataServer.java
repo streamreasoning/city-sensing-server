@@ -19,6 +19,7 @@ import org.restlet.util.Series;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import polimi.deib.city_sensing_server.configuration.Config;
 import polimi.deib.city_sensing_server.dataSource.DataSourceSingleton;
 
 import com.google.gson.Gson;
@@ -64,16 +65,16 @@ public class ConceptNetDataServer extends ServerResource{
 			String prepStmt = new String();
 
 			if(cnReq.getStart() == null || Long.parseLong(cnReq.getStart()) < 0){
-				cnReq.setStart("1365199200000");
+				cnReq.setStart(Config.getInstance().getDefaultStart());
 			}
 			if(cnReq.getEnd() == null || Long.parseLong(cnReq.getEnd()) < 0){
-				cnReq.setEnd("1366927200000");
+				cnReq.setEnd(Config.getInstance().getDefaultEnd());
 			}
 			if(cnReq.getThreshold() == null || Integer.parseInt(cnReq.getThreshold()) < 0){
-				cnReq.setThreshold("50");
+				cnReq.setThreshold(Config.getInstance().getConceptNetDefaultThreshold());
 			}
 			if(cnReq.getCells() == null || cnReq.getCells().size() == 0){
-				for(int i = 1 ; i < 9999 ; i++){
+				for(int i = 1 ; i < Config.getInstance().getDefaultNumberOfCells() ; i++){
 					cellList.add(i);
 					prepStmt = prepStmt + "?,";
 				}

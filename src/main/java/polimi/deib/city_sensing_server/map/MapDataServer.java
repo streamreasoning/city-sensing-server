@@ -18,6 +18,7 @@ import org.restlet.util.Series;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import polimi.deib.city_sensing_server.configuration.Config;
 import polimi.deib.city_sensing_server.dataSource.DataSourceSingleton;
 
 import com.google.gson.Gson;
@@ -63,13 +64,13 @@ public class MapDataServer extends ServerResource{
 			String prepStmt = new String();
 
 			if(mReq.getStart() == null || Long.parseLong(mReq.getStart()) < 0){
-				mReq.setStart("1365199200000");
+				mReq.setStart(Config.getInstance().getDefaultStart());
 			}
 			if(mReq.getEnd() == null || Long.parseLong(mReq.getEnd()) < 0){
-				mReq.setEnd("1366927200000");
+				mReq.setEnd(Config.getInstance().getDefaultEnd());
 			}
 			if(mReq.getCells() == null || mReq.getCells().size() == 0){
-				for(int i = 1 ; i < 9999 ; i++){
+				for(int i = 1 ; i < Config.getInstance().getDefaultNumberOfCells() ; i++){
 					cellList.add(i);
 					prepStmt = prepStmt + "?,";
 				}

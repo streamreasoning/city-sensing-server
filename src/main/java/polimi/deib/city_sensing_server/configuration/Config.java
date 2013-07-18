@@ -20,6 +20,12 @@ public class Config {
 			logger.error("Error while reading the configuration file", e);
 		}
 	}
+	
+	public static Config getInstance(){
+		if(_instance==null)
+			_instance=new Config();
+		return _instance;
+	}
 		
 	public String getServerVersion(){
 		return config.getString("city_sensing_server.version");
@@ -27,6 +33,10 @@ public class Config {
 	
 	public int getServerPort(){
 		return config.getInt("city_sensing_server.port");
+	}
+	
+	public boolean getCreateViewOnDB(){
+		return Boolean.parseBoolean(config.getString("city_sensing_server.createviewondb"));
 	}
 	
 	//MysqlServer Parameters
@@ -46,19 +56,7 @@ public class Config {
 	public String getMysqlPwd(){
 		return config.getString("mysql.password");
 	}	
-	
-	public boolean getCreateViewOnDB(){
-		return Boolean.parseBoolean(config.getString("city_sensing_server.createviewondb"));
-	}
-	
-//	public int getMaxActiveConnectionNumber(){
-//		return config.getInt("mysql.maxactiveconnectionnumber");
-//	}
-//	
-//	public int getMaxIdleConnectionNumber(){
-//		return config.getInt("mysql.maxidleconnectionnumber");
-//	}
-	
+
 	// ConnectionPool Paramters
 	
 	public int getacquireIncrement(){
@@ -79,11 +77,25 @@ public class Config {
 	
 	public int getMaxStatements(){
 		return config.getInt("connection_pool.maxStatements");
-	}
-	public static Config getInstance(){
-		if(_instance==null)
-			_instance=new Config();
-		return _instance;
+	}	
+	
+	//Services shared settings
+	
+	public String getDefaultStart(){
+		return config.getString("services.default_startTime");
 	}
 	
+	public String getDefaultEnd(){
+		return config.getString("services.default_endTime");
+	}
+	
+	public int getDefaultNumberOfCells(){
+		return config.getInt("services.default_numberOfCells");
+	}
+	
+	//Single service settings
+	
+	public String getConceptNetDefaultThreshold(){
+		return config.getString("concept_network.deafaul_threshold");
+	}
 }

@@ -17,6 +17,7 @@ import org.restlet.util.Series;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import polimi.deib.city_sensing_server.configuration.Config;
 import polimi.deib.city_sensing_server.dataSource.DataSourceSingleton;
 
 import com.google.gson.Gson;
@@ -63,7 +64,7 @@ public class ContextTimelineDataServer extends ServerResource{
 			String prepStmt = new String();
 
 			if(cReq.getCells() == null || cReq.getCells().size() == 0){
-				for(int i = 1 ; i < 9999 ; i++){
+				for(int i = 1 ; i < Config.getInstance().getDefaultNumberOfCells() ; i++){
 					cellList.add(i);
 					prepStmt = prepStmt + "?,";
 				}

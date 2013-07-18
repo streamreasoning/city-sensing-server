@@ -18,6 +18,7 @@ import org.restlet.util.Series;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import polimi.deib.city_sensing_server.configuration.Config;
 import polimi.deib.city_sensing_server.dataSource.DataSourceSingleton;
 
 import com.google.gson.Gson;
@@ -66,13 +67,13 @@ public class FocusTimelineDataServer extends ServerResource{
 			String prepStmt = new String();
 
 			if(tReq.getStart() == null || Long.parseLong(tReq.getStart()) < 0){
-				tReq.setStart("1365199200000");
+				tReq.setStart(Config.getInstance().getDefaultStart());
 			}
 			if(tReq.getEnd() == null || Long.parseLong(tReq.getEnd()) < 0){
-				tReq.setEnd("1366927200000");
+				tReq.setEnd(Config.getInstance().getDefaultEnd());
 			}
 			if(tReq.getCells() == null || tReq.getCells().size() == 0){
-				for(int i = 1 ; i < 9999 ; i++){
+				for(int i = 1 ; i < Config.getInstance().getDefaultNumberOfCells() ; i++){
 					cellList.add(i);
 					prepStmt = prepStmt + "?,";
 				}
