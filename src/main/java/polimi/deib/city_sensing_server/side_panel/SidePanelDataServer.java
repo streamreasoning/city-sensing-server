@@ -88,10 +88,9 @@ public class SidePanelDataServer extends ServerResource{
 			connection = DataSourceSingleton.getInstance().getConnection();
 			connection.setAutoCommit(false);
 
-			String sqlQuery = "SELECT SUM(outgoing_call_number),SUM(incoming_call_number),SUM(outgoing_sms_number),SUM(incoming_sms_number),SUM(data_cdr_number) " +
+			String sqlQuery = "SELECT ROUND(SUM(outgoing_call_number),0),ROUND(SUM(incoming_call_number),0),ROUND(SUM(outgoing_sms_number),0),ROUND(SUM(incoming_sms_number),0),ROUND(SUM(data_cdr_number),0) " +
 					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2 " +
-					"WHERE square_ID IN (" + prepStmt + ") AND ts_ID >= ? AND ts_ID <= ? " +
-					"GROUP BY square_ID";
+					"WHERE square_ID IN (" + prepStmt + ") AND ts_ID >= ? AND ts_ID <= ? ";
 
 			long startTs = System.currentTimeMillis();
 			p1 = connection.prepareStatement(sqlQuery);

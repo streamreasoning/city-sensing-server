@@ -65,6 +65,7 @@ public class FocusTimelineDataServer extends ServerResource{
 
 			ArrayList<Integer> cellList = new ArrayList<Integer>();
 			String prepStmt = new String();
+			String anomalyColumnName = new String();
 
 			if(tReq.getStart() == null || Long.parseLong(tReq.getStart()) < 0){
 				tReq.setStart(Config.getInstance().getDefaultStart());
@@ -83,13 +84,20 @@ public class FocusTimelineDataServer extends ServerResource{
 					prepStmt = prepStmt + "?,";
 				}
 			}
-
+			if(tReq.getAnomalyColumnName() == null){
+				anomalyColumnName = "anomaly_index";
+			} else {
+				anomalyColumnName = tReq.getAnomalyColumnName();
+			}
+			
 			prepStmt = prepStmt.substring(0, prepStmt.length() - 1);
 
 			connection = DataSourceSingleton.getInstance().getConnection();
 			connection.setAutoCommit(false);
 
-			String sqlQuery = "SELECT ts_ID,AVG(anomaly_index) AS mobily_anomaly,SUM(n_tweets) AS social_activity " +
+			String sqlQuery = "SELECT ts_ID,AVG(" + anomalyColumnName + ") AS mobily_anomaly,SUM(n_tweets) AS social_activity, " +
+					"(SUM(incoming_call_number) + SUM(outgoing_call_number) + SUM(incoming_sms_number) + SUM(outgoing_sms_number) + SUM(data_cdr_number)) AS mobily_activity, " +
+					"(SUM(positive_tweets_number) - SUM(negative_tweets_number) + (SUM(neutral_tweets_number) * 0.01)) AS social_sentiment " +
 					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2 " +
 					"WHERE square_ID IN (" + prepStmt + ") AND ts_id >= ? AND ts_id <= ? " +
 					"GROUP BY ts_ID";
@@ -118,8 +126,14 @@ public class FocusTimelineDataServer extends ServerResource{
 
 				step.setStart(Long.parseLong(resultSet.getString(1)));
 				step.setEnd(Long.parseLong(resultSet.getString(1)) + tsInterval);
-				step.setMobile_anomaly(Double.parseDouble(resultSet.getString(2)));
+				step.setMobily_anomaly(Double.parseDouble(resultSet.getString(2)));
 				step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
+				step.setMobily_activity(Double.parseDouble(resultSet.getString(4)));
+				if(step.getSocial_activity() != 0)
+					step.setSocial_sentiment((Double.parseDouble(resultSet.getString(5)) / step.getSocial_activity()));
+				else
+					step.setSocial_sentiment(Double.parseDouble(resultSet.getString(5)));
+				
 				stepList.add(step);
 
 				next = resultSet.next();

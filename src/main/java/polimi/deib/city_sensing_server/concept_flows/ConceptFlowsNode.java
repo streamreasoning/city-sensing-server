@@ -31,5 +31,14 @@ public class ConceptFlowsNode {
 	public void setSentiment(long sentiment) {
 		this.sentiment = sentiment;
 	}
+	
+	@Override
+	public boolean equals(Object other){
+		ConceptFlowsNode cfn = (ConceptFlowsNode) other;
+	    if(this.id.equals(cfn.getId()) && this.label.equals(cfn.getLabel()) && this.group.equals(cfn.getGroup()))
+	    	return true;
+	    else
+	    	return false;
+	}
 
 }

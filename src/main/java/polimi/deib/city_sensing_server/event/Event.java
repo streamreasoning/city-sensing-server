@@ -10,6 +10,7 @@ public class Event {
 	private String address;
 	private Collection<Long> date;
 	private String link;
+	private long squareID; 
 	
 	public long getId() {
 		return id;
@@ -46,6 +47,12 @@ public class Event {
 	}
 	public void setLink(String link) {
 		this.link = link;
+	}
+	public long getSquareID() {
+		return squareID;
+	}
+	public void setSquareID(long squareID) {
+		this.squareID = squareID;
 	}
 	
 }

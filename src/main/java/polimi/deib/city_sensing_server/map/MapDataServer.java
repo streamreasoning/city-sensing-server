@@ -62,6 +62,7 @@ public class MapDataServer extends ServerResource{
 
 			ArrayList<Integer> cellList = new ArrayList<Integer>();
 			String prepStmt = new String();
+			String anomalyColumnName = new String();
 
 			if(mReq.getStart() == null || Long.parseLong(mReq.getStart()) < 0){
 				mReq.setStart(Config.getInstance().getDefaultStart());
@@ -80,6 +81,11 @@ public class MapDataServer extends ServerResource{
 					prepStmt = prepStmt + "?,";
 				}
 			}
+			if(mReq.getAnomalyColumnName() == null){
+				anomalyColumnName = "anomaly_index";
+			} else {
+				anomalyColumnName = mReq.getAnomalyColumnName();
+			}
 
 			prepStmt = prepStmt.substring(0, prepStmt.length() - 1);
 
@@ -87,7 +93,7 @@ public class MapDataServer extends ServerResource{
 			connection.setAutoCommit(false);
 
 			String sqlQuery = "SELECT square_ID,(SUM(incoming_call_number) + SUM(outgoing_call_number) + SUM(incoming_sms_number) + SUM(outgoing_sms_number) + SUM(data_cdr_number)) AS mobily_activity, " +
-					"AVG(anomaly_index) AS mobily_anomaly , SUM(n_tweets) AS social_activity, (SUM(positive_tweets_number) - SUM(negative_tweets_number) + (SUM(neutral_tweets_number) * 0.1)) AS social_sentiment " +
+					"AVG(" + anomalyColumnName + ") AS mobily_anomaly , SUM(n_tweets) AS social_activity, (SUM(positive_tweets_number) - SUM(negative_tweets_number) + (SUM(neutral_tweets_number) * 0.01)) AS social_sentiment " +
 					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2 " +
 					"WHERE square_ID IN (" + prepStmt + ") AND ts_ID > ? AND ts_ID < ? " +
 					"GROUP BY square_ID";
@@ -116,10 +122,10 @@ public class MapDataServer extends ServerResource{
 				mapCell.setMobily_anomaly(Double.parseDouble(resultSet.getString(3)));
 				mapCell.setSocial_activity(Double.parseDouble(resultSet.getString(4)));
 				if(mapCell.getSocial_activity() != 0)
-					mapCell.setSocial_sentiment(Double.parseDouble(resultSet.getString(5)) / mapCell.getSocial_activity());
+					mapCell.setSocial_sentiment((Double.parseDouble(resultSet.getString(5)) / mapCell.getSocial_activity()));
 				else
 					mapCell.setSocial_sentiment(Double.parseDouble(resultSet.getString(5)));
-
+				
 				mapCellList.add(mapCell);
 
 				next = resultSet.next();

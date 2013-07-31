@@ -83,7 +83,7 @@ public class EventListDataServer extends ServerResource{
 
 			prepStmt = prepStmt.substring(0, prepStmt.length() - 1);
 
-			String sqlQuery = "SELECT DISTINCT EVENT.event_ID, EVENT.name, VENUE.address, EVENT.start_date, EVENT.end_date, EVENT.link, EVENT.event_venue_ID " +
+			String sqlQuery = "SELECT DISTINCT EVENT.event_ID, EVENT.name, VENUE.address, EVENT.start_date, EVENT.end_date, EVENT.link, EVENT.event_venue_ID, VENUE.venue_square_ID " +
 					"FROM EVENT,VENUE " +
 					"WHERE event_venue_ID = venue_ID AND ( start_date >= ? OR end_date <= ? ) AND " +
 					"venue_square_ID IN  (" + prepStmt + ") ";
@@ -137,7 +137,7 @@ public class EventListDataServer extends ServerResource{
 				dateList.add(Long.parseLong(resultSet.getString(5)));
 				event.setDate(dateList);
 				event.setLink(resultSet.getString(6));
-
+				event.setSquareID(Long.parseLong(resultSet.getString(8)));
 				
 				p2.setObject(1, Integer.parseInt(resultSet.getString(7)));
 				innerResultSet = p2.executeQuery();

@@ -8,7 +8,7 @@
 		</encoder>
 	</appender>
 	<appender name="FILE_ERROR" class="ch.qos.logback.core.FileAppender">
-		<file>city_sensing_server_error.log</file>
+		<file>log/city_sensing_server_error.log</file>
 		<append>true</append>
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
 			<level>ERROR</level>
@@ -20,7 +20,7 @@
 		</encoder>
 	</appender>
 	<appender name="FILE_DEBUG" class="ch.qos.logback.core.FileAppender">
-		<file>city_sensing_server_debug.log</file>
+		<file>log/city_sensing_server_debug.log</file>
 		<append>true</append>
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
 			<level>DEBUG</level>

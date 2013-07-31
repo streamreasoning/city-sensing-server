@@ -4,10 +4,11 @@ import java.util.ArrayList;
 
 public class FocusTimelineRequest {
 	
-	String start;
-	String end;
-	ArrayList<String> cells;
-
+	private String start;
+	private String end;
+	private ArrayList<String> cells;
+	private String anomalyColumnName;
+	
 	public String getStart() {
 		return start;
 	}
@@ -25,6 +26,12 @@ public class FocusTimelineRequest {
 	}
 	public void setCells(ArrayList<String> cells) {
 		this.cells = cells;
+	}
+	public String getAnomalyColumnName() {
+		return anomalyColumnName;
+	}
+	public void setAnomalyColumnName(String anomalyColumnName) {
+		this.anomalyColumnName = anomalyColumnName;
 	}
 	
 }
