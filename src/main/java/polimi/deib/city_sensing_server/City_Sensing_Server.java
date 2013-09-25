@@ -19,14 +19,15 @@ import polimi.deib.city_sensing_server.configuration.Config;
 import polimi.deib.city_sensing_server.dataSource.DataSourceSingleton;
 import polimi.deib.city_sensing_server.event.EventListDataServer;
 import polimi.deib.city_sensing_server.map.MapDataServer;
+import polimi.deib.city_sensing_server.most_contacted_chart.MostContactedChartDataServer;
 import polimi.deib.city_sensing_server.side_panel.SidePanelDataServer;
 import polimi.deib.city_sensing_server.timeline.ContextTimelineDataServer;
 import polimi.deib.city_sensing_server.timeline.FocusTimelineDataServer;
 
 
-public class Rest_Server extends Application {
+public class City_Sensing_Server extends Application {
 
-	private static Logger logger = LoggerFactory.getLogger(Rest_Server.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(City_Sensing_Server.class.getName());
 	private static String version = Config.getInstance().getServerVersion();
 
 //	public static BasicDataSource bds;
@@ -64,7 +65,7 @@ public class Rest_Server extends Application {
 		//		component.getServers().getContext().getParameters().add("maxQueued", "10"); 
 		component.getClients().add(Protocol.FILE);  
 
-		Rest_Server server = new Rest_Server();
+		City_Sensing_Server server = new City_Sensing_Server();
 		component.getDefaultHost().attach("", server);
 
 		logger.debug("Starting city sensing Server with parameters : ");
@@ -101,6 +102,7 @@ public class Rest_Server extends Application {
 		router.attach("/" + version + "/timeline/focus",FocusTimelineDataServer.class);
 		router.attach("/" + version + "/timeline/context",ContextTimelineDataServer.class);
 		router.attach("/" + version + "/eventlist",EventListDataServer.class);
+		router.attach("/" + version + "/inoutchart",MostContactedChartDataServer.class);
 
 		return router;
 	}
