@@ -96,6 +96,6 @@ public class Config {
 	//Single service settings
 	
 	public String getConceptNetDefaultThreshold(){
-		return config.getString("concept_network.deafaul_threshold");
+		return config.getString("concept_network.default_threshold");
 	}
 }
