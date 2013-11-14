@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import polimi.deib.city_sensing_server.configuration.Config;
 import polimi.deib.city_sensing_server.dataSource.DataSourceSingleton;
-import polimi.deib.city_sensing_server.map.MapDataServer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,7 +27,7 @@ import com.google.gson.stream.JsonReader;
 
 public class MostContactedChartDataServer  extends ServerResource{
 
-	private Logger logger = LoggerFactory.getLogger(MapDataServer.class.getName());
+	private Logger logger = LoggerFactory.getLogger(MostContactedChartDataServer.class.getName());
 
 	@SuppressWarnings({ "unchecked", "rawtypes"})
 	@Post
