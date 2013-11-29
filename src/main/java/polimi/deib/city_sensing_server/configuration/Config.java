@@ -98,4 +98,19 @@ public class Config {
 	public String getConceptNetDefaultThreshold(){
 		return config.getString("concept_network.default_threshold");
 	}
+	
+	//Sentiment
+	
+	public float getSentimentPositiveCoefficient(){
+		return config.getFloat("sentiment.positiveCoefficient");
+	}
+	
+	public float getSentimentNegativeCoefficient(){
+		return config.getFloat("sentiment.negativeCoefficient");
+	}
+	
+	public float getSentimentNeutralCoefficient(){
+		return config.getFloat("sentiment.neutralCoefficient");
+	}
+	
 }

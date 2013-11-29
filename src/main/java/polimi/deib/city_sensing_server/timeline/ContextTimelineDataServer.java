@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.header.Header;
@@ -88,7 +89,8 @@ public class ContextTimelineDataServer extends ServerResource{
 
 			String sqlQuery = "SELECT 3h_ts_id,AVG(" + anomalyColumnName + ") AS mobily_anomaly,SUM(n_tweets) AS social_activity, " +
 					"(SUM(incoming_call_number) + SUM(outgoing_call_number) + SUM(incoming_sms_number) + SUM(outgoing_sms_number) + SUM(data_cdr_number)) AS mobily_activity, " +
-					"(SUM(positive_tweets_number) - SUM(negative_tweets_number) + (SUM(neutral_tweets_number) * 0.01)) AS social_sentiment " +
+					"((SUM(positive_tweets_number) * " + Config.getInstance().getSentimentPositiveCoefficient() + ") - (SUM(negative_tweets_number) * " + Config.getInstance().getSentimentNegativeCoefficient() + ") + (SUM(neutral_tweets_number)  * " + Config.getInstance().getSentimentNeutralCoefficient() + " )) AS social_sentiment , " + 
+					"((SUM(positive_tweets_number) * " + Config.getInstance().getSentimentPositiveCoefficient() + ") + (SUM(negative_tweets_number) * " + Config.getInstance().getSentimentNegativeCoefficient() + ") + (SUM(neutral_tweets_number)  * " + Config.getInstance().getSentimentNeutralCoefficient() + " )) AS weightedSocialActivity " +					
 					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2 " +
 					"WHERE square_ID IN (" + prepStmt + ") " +
 					"GROUP BY 3h_ts_id";
@@ -116,10 +118,15 @@ public class ContextTimelineDataServer extends ServerResource{
 					step.setMobily_anomaly(Double.parseDouble(resultSet.getString(2)));
 					step.setSocial_activity(Double.parseDouble(resultSet.getString(3)));
 					step.setMobily_activity(Double.parseDouble(resultSet.getString(4)));
-					if(step.getSocial_activity() != 0)
-						step.setSocial_sentiment((Double.parseDouble(resultSet.getString(5)) / step.getSocial_activity()));
+					double weightedSocialActivity = Double.parseDouble(resultSet.getString(6));
+					if(weightedSocialActivity != 0)
+						step.setSocial_sentiment((Double.parseDouble(resultSet.getString(5)) / weightedSocialActivity));
 					else
 						step.setSocial_sentiment(Double.parseDouble(resultSet.getString(5)));
+//					if(step.getSocial_activity() != 0)
+//						step.setSocial_sentiment((Double.parseDouble(resultSet.getString(5)) / step.getSocial_activity()));
+//					else
+//						step.setSocial_sentiment(Double.parseDouble(resultSet.getString(5)));
 
 					stepList.add(step);
 				}

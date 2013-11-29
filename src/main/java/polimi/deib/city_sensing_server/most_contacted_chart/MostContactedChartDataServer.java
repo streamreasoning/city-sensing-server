@@ -121,7 +121,9 @@ public class MostContactedChartDataServer  extends ServerResource{
 			while(next){
 				cell = new MostContactedChartCell();
 				cell.setCountryCode(resultset.getString(1));
-				cell.setCount(Double.parseDouble(resultset.getString(2)));	
+				cell.setCount(Double.parseDouble(resultset.getString(2)));
+				cell.setLocation("international");
+				cell.setType("in");
 				mostContactedCellList.add(cell);
 				next = resultset.next();
 			}
@@ -130,9 +132,6 @@ public class MostContactedChartDataServer  extends ServerResource{
 				resultset.close();
 			}
 			
-			mostContactedResponse.setInternationalContantactsIn(mostContactedCellList);
-			
-			mostContactedCellList = new ArrayList<MostContactedChartCell>();
 			query = "SELECT country, SUM(sum) AS overall_sum FROM " +
 					"( SELECT country, SUM(count) as sum FROM skil_call_out " +
 					"WHERE square_id IN (" + prepStmt + ") AND quarter >= ? AND quarter <= ? " +
@@ -166,6 +165,8 @@ public class MostContactedChartDataServer  extends ServerResource{
 				cell = new MostContactedChartCell();
 				cell.setCountryCode(resultset.getString(1));
 				cell.setCount(Double.parseDouble(resultset.getString(2)));
+				cell.setLocation("international");
+				cell.setType("out");
 				mostContactedCellList.add(cell);
 				next = resultset.next();
 			}
@@ -174,9 +175,6 @@ public class MostContactedChartDataServer  extends ServerResource{
 				resultset.close();
 			}
 			
-			mostContactedResponse.setInternationalContantactsOut(mostContactedCellList);
-			
-			mostContactedCellList = new ArrayList<MostContactedChartCell>();
 			query = "SELECT province, SUM(count) as sum FROM skil_rec_in " +
 					"WHERE square_id IN (" + prepStmt + ") AND quarter >= ? AND quarter <= ? " +
 					"GROUP BY province " +
@@ -201,6 +199,8 @@ public class MostContactedChartDataServer  extends ServerResource{
 				cell = new MostContactedChartCell();
 				cell.setCountryCode(resultset.getString(1));
 				cell.setCount(Double.parseDouble(resultset.getString(2)));		
+				cell.setLocation("national");
+				cell.setType("in");
 				mostContactedCellList.add(cell);
 				next = resultset.next();
 			}
@@ -209,9 +209,6 @@ public class MostContactedChartDataServer  extends ServerResource{
 				resultset.close();
 			}
 			
-			mostContactedResponse.setNationalContantactsIn(mostContactedCellList);
-
-			mostContactedCellList = new ArrayList<MostContactedChartCell>();
 			query = "SELECT province, SUM(count) as sum FROM skil_rec_out " +
 					"WHERE square_id IN (" + prepStmt + ") AND quarter >= ? AND quarter <= ? " +
 					"GROUP BY province " +
@@ -235,7 +232,9 @@ public class MostContactedChartDataServer  extends ServerResource{
 			while(next){
 				cell = new MostContactedChartCell();
 				cell.setCountryCode(resultset.getString(1));
-				cell.setCount(Double.parseDouble(resultset.getString(2)));	
+				cell.setCount(Double.parseDouble(resultset.getString(2)));
+				cell.setLocation("national");
+				cell.setType("out");
 				mostContactedCellList.add(cell);
 				next = resultset.next();
 			}
@@ -244,7 +243,7 @@ public class MostContactedChartDataServer  extends ServerResource{
 				resultset.close();
 			}
 			
-			mostContactedResponse.setNationalContantactsOut(mostContactedCellList);
+			mostContactedResponse.setContactsChart(mostContactedCellList);
 
 			startTs = System.currentTimeMillis();
 			String respString = gson.toJson(mostContactedResponse);

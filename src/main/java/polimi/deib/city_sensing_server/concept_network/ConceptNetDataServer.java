@@ -154,7 +154,8 @@ public class ConceptNetDataServer extends ServerResource{
 						link.setTarget(internalNode.getId());
 						link.setValue(externalNode.getCount() + internalNode.getCount());
 
-						linkList.add(link);						
+						if(!linkList.contains(link))
+							linkList.add(link);						
 					}
 
 				}
@@ -162,11 +163,14 @@ public class ConceptNetDataServer extends ServerResource{
 			}
 
 			Collections.sort(linkList);
-			
+
 			//Cut number of link
 			int linkNumberLimit = 1000;
-			if(linkList.size() > linkNumberLimit)
-				linkList.removeAll(linkList.subList(linkNumberLimit + 1, linkList.size()));
+			if(linkList.size() > linkNumberLimit){
+				ArrayList<ConceptNetLink> tempSubList = new ArrayList<ConceptNetLink>();
+				tempSubList.addAll(linkList.subList(linkNumberLimit + 1, linkList.size()));
+				linkList.removeAll(tempSubList);
+			}
 
 			//			sqlQuery = "SELECT DISTINCT HT1.hashtag,HT2.hashtag,COUNT(*) as count " +
 			//					"FROM HASHTAG_SQUARE as HT1, HASHTAG_SQUARE as HT2 " +
@@ -209,7 +213,7 @@ public class ConceptNetDataServer extends ServerResource{
 			if(resultSet != null){
 				resultSet.close();
 			}
-			
+
 			startTs = System.currentTimeMillis();
 			String respString = gson.toJson(response);
 			endTs = System.currentTimeMillis();
