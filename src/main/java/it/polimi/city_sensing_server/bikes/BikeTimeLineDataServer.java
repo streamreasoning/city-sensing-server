@@ -35,7 +35,6 @@ import com.hp.hpl.jena.query.Syntax;
 public class BikeTimeLineDataServer extends ServerResource{
 
 	private Logger logger = LoggerFactory.getLogger(BikeTimeLineDataServer.class.getName());
-	private long actualizationInterval = 30495300000L;
 
 	@SuppressWarnings({ "unchecked", "rawtypes"})
 	@Post
@@ -69,10 +68,10 @@ public class BikeTimeLineDataServer extends ServerResource{
 			boolean allCells = false;
 
 			if(bReq.getStart() == null || Long.parseLong(bReq.getStart()) < 0){
-				bReq.setStart(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart()) + actualizationInterval));
+				bReq.setStart(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart())));
 			}
 			if(bReq.getEnd() == null || Long.parseLong(bReq.getEnd()) < 0){
-				bReq.setEnd(String.valueOf(Long.parseLong(Config.getInstance().getDefaultEnd()) + actualizationInterval));
+				bReq.setEnd(String.valueOf(Long.parseLong(Config.getInstance().getDefaultEnd())));
 			}
 			if(bReq.getCells() == null || bReq.getCells().size() == 0){
 				allCells = true;
@@ -130,7 +129,7 @@ public class BikeTimeLineDataServer extends ServerResource{
 						+ "} "
 						+ "} "
 						+ "GROUP BY ?graphGenTS ";
-				
+
 			}
 
 			long startTs = System.currentTimeMillis();
@@ -142,26 +141,29 @@ public class BikeTimeLineDataServer extends ServerResource{
 			long endTs = System.currentTimeMillis();
 
 			logger.debug("Bike Time Line query done, time: {} ms",endTs - startTs);
-			
+
 			BikeStep bikeStep;
 			BikeTimeLineResponse response = new BikeTimeLineResponse();
-			
+
 			long tsInterval = 900000;
-			
-//			System.out.println(ResultSetFormatter.asText(rs));
-			
+
+			//			System.out.println(ResultSetFormatter.asText(rs));
+
 			while (rs.hasNext()) {
 				QuerySolution qs = (QuerySolution) rs.next();
-				
-				bikeStep = new BikeStep();
 
-				bikeStep.setStart(DatatypeConverter.parseDateTime(qs.getLiteral("graphGenTS").getLexicalForm()).getTimeInMillis());
-				bikeStep.setEnd(DatatypeConverter.parseDateTime(qs.getLiteral("graphGenTS").getLexicalForm()).getTimeInMillis() + tsInterval);
-				bikeStep.setAvailableBikes(Long.parseLong(qs.getLiteral("aBikes").getLexicalForm()));
-				bikeStep.setInUseBikes(Long.parseLong(qs.getLiteral("aStall").getLexicalForm()));
-				bikeStep.setDocks(Long.parseLong(qs.getLiteral("aStall").getLexicalForm()) + Long.parseLong(qs.getLiteral("aBikes").getLexicalForm()));
+				if(qs.contains("graphGenTS")){
 
-				response.addElementToList(bikeStep);
+					bikeStep = new BikeStep();
+
+					bikeStep.setStart(DatatypeConverter.parseDateTime(qs.getLiteral("graphGenTS").getLexicalForm()).getTimeInMillis());
+					bikeStep.setEnd(DatatypeConverter.parseDateTime(qs.getLiteral("graphGenTS").getLexicalForm()).getTimeInMillis() + tsInterval);
+					bikeStep.setAvailableBikes(Long.parseLong(qs.getLiteral("aBikes").getLexicalForm()));
+					bikeStep.setInUseBikes(Long.parseLong(qs.getLiteral("aStall").getLexicalForm()));
+					bikeStep.setDocks(Long.parseLong(qs.getLiteral("aStall").getLexicalForm()) + Long.parseLong(qs.getLiteral("aBikes").getLexicalForm()));
+
+					response.addElementToList(bikeStep);
+				}
 			}
 
 			startTs = System.currentTimeMillis();
@@ -198,6 +200,7 @@ public class BikeTimeLineDataServer extends ServerResource{
 		} finally {
 			if(qexec != null)
 				qexec.close();
+			rep.release();
 		}
 	}
 }

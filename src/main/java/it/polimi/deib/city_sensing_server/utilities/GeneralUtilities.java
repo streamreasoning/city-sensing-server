@@ -2,7 +2,6 @@ package it.polimi.deib.city_sensing_server.utilities;
 
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
-import java.util.spi.TimeZoneNameProvider;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;

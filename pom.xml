@@ -145,7 +145,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-							<mainClass>polimi.deib.city_sensing_server.City_Sensing_Server</mainClass>
+							<mainClass>it.polimi.deib.city_sensing_server.City_Sensing_Server</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

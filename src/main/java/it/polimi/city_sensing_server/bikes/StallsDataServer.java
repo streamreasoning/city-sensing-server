@@ -34,7 +34,6 @@ import com.hp.hpl.jena.query.Syntax;
 public class StallsDataServer extends ServerResource{
 
 	private Logger logger = LoggerFactory.getLogger(StallsDataServer.class.getName());
-	private long actualizationInterval = 30495300000L;
 
 	@SuppressWarnings({ "unchecked", "rawtypes"})
 	@Post
@@ -68,7 +67,7 @@ public class StallsDataServer extends ServerResource{
 			boolean allCells = false;
 
 			if(sReq.getWhen() == null || Long.parseLong(sReq.getWhen()) < 0){
-				sReq.setWhen(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart()) + actualizationInterval));
+				sReq.setWhen(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart())));
 			}
 			if(sReq.getCells() == null || sReq.getCells().size() == 0){
 				allCells = true;
@@ -207,6 +206,7 @@ public class StallsDataServer extends ServerResource{
 		} finally {
 			if(qexec != null)
 				qexec.close();
+			rep.release();
 		}
 	}
 }

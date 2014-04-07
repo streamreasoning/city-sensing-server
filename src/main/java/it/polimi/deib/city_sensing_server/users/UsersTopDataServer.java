@@ -34,7 +34,6 @@ import com.hp.hpl.jena.query.Syntax;
 public class UsersTopDataServer extends ServerResource{
 
 	private Logger logger = LoggerFactory.getLogger(UsersTopDataServer.class.getName());
-	private long actualizationInterval = 30495300000L;
 
 	@SuppressWarnings({ "unchecked", "rawtypes"})
 	@Post
@@ -68,16 +67,16 @@ public class UsersTopDataServer extends ServerResource{
 			boolean allCells = false;
 
 			if(uReq.getStart() == null || Long.parseLong(uReq.getStart()) < 0){
-				uReq.setStart(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart()) + actualizationInterval));
+				uReq.setStart(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart())));
 			}
 			if(uReq.getEnd() == null || Long.parseLong(uReq.getEnd()) < 0){
-				uReq.setEnd(String.valueOf(Long.parseLong(Config.getInstance().getDefaultEnd())+ actualizationInterval));
+				uReq.setEnd(String.valueOf(Long.parseLong(Config.getInstance().getDefaultEnd())));
 			}
 			if(uReq.getCells() == null || uReq.getCells().size() == 0){
 				allCells = true;
 			} else {
 				for(String s : uReq.getCells()){
-					cellListString = cellListString + s + ",";
+					cellListString = cellListString + "\"" + s + "\"" + "^^xsd:long,";
 				}
 				cellListString = cellListString.substring(0, cellListString.lastIndexOf(","));
 			}
@@ -106,7 +105,7 @@ public class UsersTopDataServer extends ServerResource{
 						+ "				sioc:topic ?venue ; "
 						+ "				sma:created_in ?cpRes . "
 						+ "				?cpRes cse:city_pixel_ID ?cpId . "
-						+ "				FILTER(?cpId > 0 && ?cpId < 10000) "
+//						+ "				FILTER(?cpId > 0 && ?cpId < 10000) "
 						+ "				FILTER (REGEX(xsd:string(?venue),'venue','i')) "
 						+ "				} "
 						+ "			} "
@@ -136,18 +135,18 @@ public class UsersTopDataServer extends ServerResource{
 						+ "{ ?g prov:generatedAtTime ?graphGenTS . "
 						+ "FILTER(?graphGenTS >= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(uReq.getStart())) + "\"^^xsd:dateTime && ?graphGenTS <= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(uReq.getEnd())) + "\"^^xsd:dateTime) "
 						+ "} "
-						+ "{ SELECT ?user (COUNT(?mp) AS ?totalCount) "
+						+ "{ SELECT ?user (COUNT(?mp) AS ?totalCount) ?cpRes "
 						+ "	WHERE { "
 						+ "			{GRAPH ?g { "
 						+ "				?mp sioc:has_creator ?user ; "
 						+ "				sioc:topic ?venue ; "
 						+ "				sma:created_in ?cpRes . "
-						+ "				?cpRes cse:city_pixel_ID ?cpId . "
-						+ "				FILTER(?cpId IN(" + cellListString + ")) "
+//						+ "				?cpRes cse:city_pixel_ID ?cpId . "
+						+ " 			FILTER(xsd:long(substr(xsd:string(?cpRes),59)) IN (" + cellListString + ")) "
 						+ "				FILTER (REGEX(xsd:string(?venue),'venue','i')) "
 						+ "				} "
 						+ "			} "
-						+ "		} GROUP BY ?user  "
+						+ "		} GROUP BY ?user ?cpRes "
 						+ "} "
 						+ "	{GRAPH ?g { "
 						+ "		?user sioc:id ?userID ; "
@@ -167,7 +166,7 @@ public class UsersTopDataServer extends ServerResource{
 			qexec = QueryExecutionFactory.createServiceRequest(Config.getInstance().getTweetsSparqlEndpointURL(), query);
 
 			ResultSet rs = qexec.execSelect();
-
+			
 			long endTs = System.currentTimeMillis();
 
 			logger.debug("User top query done, time: {} ms",endTs - startTs);
@@ -224,6 +223,7 @@ public class UsersTopDataServer extends ServerResource{
 		} finally {
 			if(qexec != null)
 				qexec.close();
+			rep.release();
 		}
 	}
 }

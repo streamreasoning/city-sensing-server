@@ -28,6 +28,7 @@ import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.query.Syntax;
 
 
@@ -35,8 +36,6 @@ public class VenuesSADataServer extends ServerResource{
 
 	private Logger logger = LoggerFactory.getLogger(VenuesSADataServer.class.getName());
 	
-	private long actualizationInterval = 30495300000L;
-
 	@SuppressWarnings({ "unchecked", "rawtypes"})
 	@Post
 	public void dataServer(Representation rep) throws IOException {
@@ -67,14 +66,14 @@ public class VenuesSADataServer extends ServerResource{
 			String venueListString = new String();
 
 			if(vReq.getStart() == null || Long.parseLong(vReq.getStart()) < 0){
-				vReq.setStart(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart()) + actualizationInterval));
+				vReq.setStart(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart())));
 			}
 			if(vReq.getEnd() == null || Long.parseLong(vReq.getEnd()) < 0){
-				vReq.setEnd(String.valueOf(Long.parseLong(Config.getInstance().getDefaultEnd()) + actualizationInterval));
+				vReq.setEnd(String.valueOf(Long.parseLong(Config.getInstance().getDefaultEnd())));
 			}
 			if(vReq.getVenues() != null || vReq.getVenues().size() != 0){
 				for(String s : vReq.getVenues()){
-					venueListString = venueListString + s + ",";
+					venueListString = venueListString + "\"" + s + "\"" + "^^xsd:long,";
 				}
 				venueListString = venueListString.substring(0, venueListString.lastIndexOf(","));
 			}
@@ -85,19 +84,19 @@ public class VenuesSADataServer extends ServerResource{
 					+ "PREFIX xsd:<http://www.w3.org/2001/XMLSchema#> "
 					+ "PREFIX sioc:<http://rdfs.org/sioc/ns#> "
 					+ "PREFIX geo:<http://www.w3.org/2003/01/geo/wgs84_pos#> "
-					+ "SELECT ?venue ?totalCount "
+					+ "SELECT ?venue ?totalCount ?c "
 					+ "WHERE { "
 					+ "{ SELECT ?venue (COUNT(DISTINCT ?mp) AS ?totalCount) "
-					+ "  WHERE { "
+					+ " WHERE { "
 					+ "		{ ?g prov:generatedAtTime ?graphGenTS . "
-					+ "	 		FILTER(?graphGenTS >= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(vReq.getStart())) + "\"^^xsd:dateTime && ?graphGenTS <= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(vReq.getEnd())) + "\"^^xsd:dateTime) "
+					+ "			FILTER(?graphGenTS >= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(vReq.getStart())) + "\"^^xsd:dateTime && ?graphGenTS <= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(vReq.getEnd())) + "\"^^xsd:dateTime) "
 					+ "		} "
 					+ "		{GRAPH ?g { "
 					+" 			?mp sioc:topic ?venue . "
 					+ "			FILTER (REGEX(xsd:string(?venue),'venue','i')) "
 					+ "			} "
 					+ "		} "
-					+ "	FILTER(xsd:long(substr(xsd:string(?venue),62)) IN (" + venueListString + ")) "
+					+ "		FILTER(xsd:long(substr(xsd:string(?venue),62)) IN (" + venueListString + ")) "
 					+ "	} GROUP BY ?venue "
 					+ "} "
 					+ "} "
@@ -108,7 +107,9 @@ public class VenuesSADataServer extends ServerResource{
 			qexec = QueryExecutionFactory.createServiceRequest(Config.getInstance().getTweetsSparqlEndpointURL(), query);
 
 			ResultSet rs = qexec.execSelect();
-
+			
+//			System.out.println(ResultSetFormatter.asText(rs));
+			
 			VenuesSAResponse response = new VenuesSAResponse();
 			SimplifiedVenue sv;
 			String venueStr = new String();
@@ -164,6 +165,7 @@ public class VenuesSADataServer extends ServerResource{
 		} finally {
 			if(qexec != null)
 				qexec.close();
+			rep.release();
 		}
 	}
 

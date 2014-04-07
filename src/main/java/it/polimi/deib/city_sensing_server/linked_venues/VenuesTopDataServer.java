@@ -34,8 +34,6 @@ import com.hp.hpl.jena.query.Syntax;
 public class VenuesTopDataServer extends ServerResource{
 
 	private Logger logger = LoggerFactory.getLogger(VenuesTopDataServer.class.getName());
-	private long actualizationInterval = 30495300000L;
-
 
 	@SuppressWarnings({ "unchecked", "rawtypes"})
 	@Post
@@ -69,16 +67,16 @@ public class VenuesTopDataServer extends ServerResource{
 			boolean allCells = false;
 
 			if(vReq.getStart() == null || Long.parseLong(vReq.getStart()) < 0){
-				vReq.setStart(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart()) + actualizationInterval));
+				vReq.setStart(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart())));
 			}
 			if(vReq.getEnd() == null || Long.parseLong(vReq.getEnd()) < 0){
-				vReq.setEnd(String.valueOf(Long.parseLong(Config.getInstance().getDefaultEnd()) + actualizationInterval));
+				vReq.setEnd(String.valueOf(Long.parseLong(Config.getInstance().getDefaultEnd())));
 			}
 			if(vReq.getCells() == null || vReq.getCells().size() == 0){
 				allCells = true;
 			} else {
 				for(String s : vReq.getCells()){
-					cellListString = cellListString + s + ",";
+					cellListString = cellListString + "\"" + s + "\"" + "^^xsd:long,";
 				}
 				cellListString = cellListString.substring(0, cellListString.lastIndexOf(","));
 			}
@@ -114,15 +112,15 @@ public class VenuesTopDataServer extends ServerResource{
 						+ "		geo:location ?l . "
 						+ "		?l geo:lat ?lat ; "
 						+ "		geo:long ?long . "
-//						+ "		OPTIONAL { "
-//						+ "			?venue sma:created_in ?cpRes . "
-//						+ "			?cpRes cse:city_pixel_ID ?cpId . "
-//						+ "		} "
-//						+ "		OPTIONAL { "
-//						+ "			?venue cse:city_pixel_ID ?cpId . "
-//						+ "		} "
+						//						+ "		OPTIONAL { "
+						//						+ "			?venue sma:created_in ?cpRes . "
+						//						+ "			?cpRes cse:city_pixel_ID ?cpId . "
+						//						+ "		} "
+						//						+ "		OPTIONAL { "
+						//						+ "			?venue cse:city_pixel_ID ?cpId . "
+						//						+ "		} "
 						+ " }"
-//						+ "	FILTER(xsd:long(?cpId) > 0 && xsd:long(?cpId) < 10000) "
+						//						+ "	FILTER(xsd:long(?cpId) > 0 && xsd:long(?cpId) < 10000) "
 						+ "} "
 						+ "}"
 						+ "ORDER BY DESC(?totalCount) "
@@ -152,18 +150,19 @@ public class VenuesTopDataServer extends ServerResource{
 						+ "} "
 						+ "{ SERVICE <http://www.streamreasoning.com/demos/mdw14/fuseki/cse_info/query> { "
 						+ "		?venue cse:name ?name ; "
+						+ "		sma:created_in ?cpRes ; "
 						+ "		geo:location ?l . "
 						+ "		?l geo:lat ?lat ; "
 						+ "		geo:long ?long . "
-						+ "		OPTIONAL { "
-						+ "			?venue sma:created_in ?cpRes . "
-						+ "			?cpRes cse:city_pixel_ID ?cpId . "
-						+ "		} "
-						+ "		OPTIONAL { "
-						+ "			?venue cse:city_pixel_ID ?cpId . "
-						+ "		} "
+						//						+ "		OPTIONAL { "
+						//						+ "			?venue sma:created_in ?cpRes . "
+						//						+ "			?cpRes cse:city_pixel_ID ?cpId . "
+						//						+ "		} "
+						//						+ "		OPTIONAL { "
+						//						+ "			?venue cse:city_pixel_ID ?cpId . "
+						//						+ "		} "
+						+ " FILTER(xsd:long(substr(xsd:string(?cpRes),59)) IN (" + cellListString + ")) "
 						+ " }"
-						+ " FILTER(?cpId IN (" + cellListString + ")) "
 						+ "} "
 						+ "}"
 						+ "ORDER BY DESC(?totalCount) "
@@ -233,6 +232,7 @@ public class VenuesTopDataServer extends ServerResource{
 		} finally {
 			if(qexec != null)
 				qexec.close();
+			rep.release();
 		}
 	}
 }

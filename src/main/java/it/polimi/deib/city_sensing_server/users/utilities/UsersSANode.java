@@ -5,6 +5,7 @@ public class UsersSANode {
 	private String id;
 	private String name;
 	private long socialActivity;
+	private String avatar;
 	
 	public String getId() {
 		return id;
@@ -24,6 +25,12 @@ public class UsersSANode {
 	public void setSocialActivity(long socialActivity) {
 		this.socialActivity = socialActivity;
 	}
+	public String getAvatar() {
+		return avatar;
+	}
+	public void setAvatar(String avatar) {
+		this.avatar = avatar;
+	}
 	
-
+	
 }

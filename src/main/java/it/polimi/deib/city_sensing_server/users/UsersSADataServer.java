@@ -35,7 +35,6 @@ import com.hp.hpl.jena.query.Syntax;
 public class UsersSADataServer extends ServerResource{
 
 	private Logger logger = LoggerFactory.getLogger(UsersSADataServer.class.getName());
-	private long actualizationInterval = 30495300000L;
 
 	@SuppressWarnings({ "unchecked", "rawtypes"})
 	@Post
@@ -67,14 +66,14 @@ public class UsersSADataServer extends ServerResource{
 			String userListString = new String();
 
 			if(uReq.getStart() == null || Long.parseLong(uReq.getStart()) < 0){
-				uReq.setStart(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart()) + actualizationInterval));
+				uReq.setStart(String.valueOf(Long.parseLong(Config.getInstance().getDefaultStart())));
 			}
 			if(uReq.getEnd() == null || Long.parseLong(uReq.getEnd()) < 0){
-				uReq.setEnd(String.valueOf(Long.parseLong(Config.getInstance().getDefaultEnd()) + actualizationInterval));
+				uReq.setEnd(String.valueOf(Long.parseLong(Config.getInstance().getDefaultEnd())));
 			}
 			if(uReq.getUsers() != null || uReq.getUsers().size() != 0){
 				for(String s : uReq.getUsers()){
-					userListString = userListString + "\"" + s + "\"" + ",";
+					userListString = userListString + "\"" + s + "\"" + "^^xsd:long,";
 				}
 				userListString = userListString.substring(0, userListString.lastIndexOf(","));
 			}
@@ -88,27 +87,31 @@ public class UsersSADataServer extends ServerResource{
 					+ "PREFIX xsd:<http://www.w3.org/2001/XMLSchema#> "
 					+ "PREFIX sioc:<http://rdfs.org/sioc/ns#> "
 					+ "PREFIX geo:<http://www.w3.org/2003/01/geo/wgs84_pos#> "
-					+ "SELECT DISTINCT ?user ?userID ?userName ?totalCount "
+					+ "SELECT DISTINCT ?user ?userID ?userName ?avatar ?totalCount "
 					+ "WHERE { "
-					+ "{ ?g prov:generatedAtTime ?graphGenTS . "
-					+ "FILTER(?graphGenTS >= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(uReq.getStart())) + "\"^^xsd:dateTime && ?graphGenTS <= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(uReq.getEnd())) + "\"^^xsd:dateTime) "
-					+ "} "
+					+ "	{ ?g prov:generatedAtTime ?graphGenTS . "
+					+ "		FILTER(?graphGenTS >= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(uReq.getStart())) + "\"^^xsd:dateTime && ?graphGenTS <= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(uReq.getEnd())) + "\"^^xsd:dateTime) "
+					+ "	} "
 					+ "{ SELECT ?user (COUNT(?mp) AS ?totalCount) "
 					+ "	WHERE { "
-					+ "			{GRAPH ?g { "
+					+ "		{GRAPH ?g { "
 					+ "				?mp sioc:has_creator ?user ; "
 					+ "				sioc:topic ?venue ; "
 					+ "				sma:created_in ?cpRes . "
-					+ "				?user sioc:id ?userID . "
-					+ "				FILTER(xsd:string(?userID) IN (" + userListString + ")) "
-					+ "				FILTER (REGEX(xsd:string(?venue),'venue','i')) "
+					//					+ "				?user sioc:id ?userID . "
+					+ "				FILTER(xsd:long(substr(xsd:string(?user),61)) IN (" + userListString + ")) "
+					//					+ "				FILTER (REGEX(xsd:string(?venue),'venue','i')) "
 					+ "				} "
 					+ "			} "
-					+ "		} GROUP BY ?user  "
+					+ "		} GROUP BY ?user "
 					+ "} "
 					+ "	{GRAPH ?g { "
 					+ "		?user sioc:name ?userName ; "
 					+ "		sioc:id ?userID . "
+					+ "		OPTIONAL { "
+					+ "			?user sioc:avatar ?avatar . "
+					+ "		} "
+					//					+ "		FILTER(xsd:long(substr(xsd:string(?user),60)) IN (" + userListString + ")) "
 					+ "	} "
 					+ "} "
 					+ "}"
@@ -126,16 +129,26 @@ public class UsersSADataServer extends ServerResource{
 
 			UsersSAResponse response = new UsersSAResponse();
 
+			String userNode = new String();
+
 			while (rs.hasNext()) {
 				QuerySolution qs = (QuerySolution) rs.next();
 
 				node = new UsersSANode();
 				node.setId(qs.getLiteral("userID").getLexicalForm());
+				userNode = userNode + "\"" + node.getId() + "\"" + "^^xsd:long,";
 				node.setName(qs.getLiteral("userName").getLexicalForm());
 				node.setSocialActivity(Long.parseLong(qs.getLiteral("totalCount").getLexicalForm()));
+				if(qs.getLiteral("avatar") != null)
+					node.setAvatar(qs.getLiteral("avatar").getLexicalForm());
+				else
+					node.setAvatar("");
 
 				response.addNode(node);
 			}
+
+			if(userNode.contains(","))
+				userNode = userNode.substring(0, userNode.lastIndexOf(","));
 
 			sparqlQuery = "PREFIX prov:<http://www.w3.org/ns/prov#> "
 					+ "PREFIX cse:<http://www.citydatafusion.org/ontologies/2014/1/cse#> "
@@ -143,24 +156,24 @@ public class UsersSADataServer extends ServerResource{
 					+ "PREFIX xsd:<http://www.w3.org/2001/XMLSchema#> "
 					+ "PREFIX sioc:<http://rdfs.org/sioc/ns#> "
 					+ "PREFIX geo:<http://www.w3.org/2003/01/geo/wgs84_pos#> "
-					+ "SELECT DISTINCT ?userID1 ?userID2 ?totalCount "
+					+ "SELECT DISTINCT ?user1 ?user2 ?totalCount "
 					+ "WHERE { "
-					+ "	{ ?g prov:generatedAtTime ?graphGenTS . "
-					+ "	  FILTER(?graphGenTS >= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(uReq.getStart())) + "\"^^xsd:dateTime && ?graphGenTS <= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(uReq.getEnd())) + "\"^^xsd:dateTime) "
-					+ "	} "
-					+ "	{ SELECT ?userID1 ?userID2 (COUNT(?topic) AS ?totalCount) "
+					+ "	{ SELECT ?user1 ?user2 (COUNT(?topic) AS ?totalCount) "
 					+ "	  WHERE { "
+					+ "			{ ?g prov:generatedAtTime ?graphGenTS . "
+					+ "	  			FILTER(?graphGenTS >= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(uReq.getStart())) + "\"^^xsd:dateTime && ?graphGenTS <= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(uReq.getEnd())) + "\"^^xsd:dateTime) "
+					+ "			} "
 					+ "			{GRAPH ?g { "
 					+ "				?user1 sioc:creator_of ?mp1 . "
 					+ "				?user2 sioc:creator_of ?mp2 . "
 					+ "				?mp1 sioc:topic ?topic . "
 					+ "				?mp2 sioc:topic ?topic . "
-					+ "				?user1 sioc:id ?userID1 . "
-					+ "				?user2 sioc:id ?userID2 . "
-					+ "				FILTER(xsd:long(?userID1) > xsd:long(?userID2) && xsd:string(?userID1) IN (" + userListString + ") && xsd:string(?userID2) IN (" + userListString + ")) "
+					//					+ "				?user1 sioc:id ?userID1 . "
+					//					+ "				?user2 sioc:id ?userID2 . "
+					+ "				FILTER(xsd:long(substr(xsd:string(?user1),61)) > xsd:long(substr(xsd:string(?user2),61)) && xsd:long(substr(xsd:string(?user1),61)) IN (" + userListString + ") && xsd:long(substr(xsd:string(?user2),61)) IN (" + userListString + ")) "
 					+ "				} "
 					+ "			} "
-					+ "		} GROUP BY ?userID1 ?userID2 "
+					+ "		} GROUP BY ?user1 ?user2 "
 					+ "	} "
 					+ "} "
 					+ "ORDER BY DESC(?totalCount) "
@@ -177,15 +190,18 @@ public class UsersSADataServer extends ServerResource{
 
 			logger.debug("User Social Activity query done, time: {} ms",endTs - startTs);
 			UsersSALink link;
+			String user;
 
 			while (rs.hasNext()) {
 				QuerySolution qs = (QuerySolution) rs.next();
 
-				if(qs.contains("userID1")){
+				if(qs.contains("user1") && qs.contains("user2")){
 
 					link = new UsersSALink();
-					link.setSource(qs.getLiteral("userID1").getLexicalForm());
-					link.setTarget(qs.getLiteral("userID2").getLexicalForm());
+					user = qs.getResource("user1").toString();
+					link.setSource(user.substring(user.lastIndexOf("/") + 1, user.length()));
+					user = qs.getResource("user2").toString();
+					link.setTarget(user.substring(user.lastIndexOf("/") + 1, user.length()));	
 					link.setValue(Double.parseDouble(qs.getLiteral("totalCount").getLexicalForm()));
 
 					response.addLink(link);
@@ -226,6 +242,7 @@ public class UsersSADataServer extends ServerResource{
 		} finally {
 			if(qexec != null)
 				qexec.close();
+			rep.release();
 		}
 	}
 
