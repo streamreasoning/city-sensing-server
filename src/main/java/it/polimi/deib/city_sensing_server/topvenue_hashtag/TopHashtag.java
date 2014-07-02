@@ -16,40 +16,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package it.polimi.deib.city_sensing_server.timeline;
+package it.polimi.deib.city_sensing_server.topvenue_hashtag;
 
-import java.util.ArrayList;
-
-public class FocusTimelineRequest {
+public class TopHashtag {
 	
-	private String start;
-	private String end;
-	private ArrayList<String> cells;
-	private String anomalyColumnName;
+	private String name;
+	private long socialActivity;
 	
-	public String getStart() {
-		return start;
+	public String getName() {
+		return name;
 	}
-	public void setStart(String start) {
-		this.start = start;
+	public void setName(String name) {
+		this.name = name;
 	}
-	public String getEnd() {
-		return end;
+	public long getSocialActivity() {
+		return socialActivity;
 	}
-	public void setEnd(String end) {
-		this.end = end;
-	}
-	public ArrayList<String> getCells() {
-		return cells;
-	}
-	public void setCells(ArrayList<String> cells) {
-		this.cells = cells;
-	}
-	public String getAnomalyColumnName() {
-		return anomalyColumnName;
-	}
-	public void setAnomalyColumnName(String anomalyColumnName) {
-		this.anomalyColumnName = anomalyColumnName;
+	public void setSocialActivity(long socialActivity) {
+		this.socialActivity = socialActivity;
 	}
 	
 }

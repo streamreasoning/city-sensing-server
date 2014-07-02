@@ -16,40 +16,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package it.polimi.deib.city_sensing_server.timeline;
+package it.polimi.deib.city_sensing_server.topvenue_hashtag;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class FocusTimelineRequest {
+public class TopVenueHashtagResponse {
 	
-	private String start;
-	private String end;
-	private ArrayList<String> cells;
-	private String anomalyColumnName;
+	private List<TopVenue> topVenues;
+	private List<TopHashtag> topHashtags;
 	
-	public String getStart() {
-		return start;
+	public TopVenueHashtagResponse(){
+		topVenues = new ArrayList<TopVenue>();
+		topHashtags = new ArrayList<TopHashtag>();
 	}
-	public void setStart(String start) {
-		this.start = start;
+	
+	public List<TopVenue> getTopVenues() {
+		return topVenues;
 	}
-	public String getEnd() {
-		return end;
+	public void setTopVenues(List<TopVenue> topVenues) {
+		this.topVenues = topVenues;
 	}
-	public void setEnd(String end) {
-		this.end = end;
+	public List<TopHashtag> getTopHashtags() {
+		return topHashtags;
 	}
-	public ArrayList<String> getCells() {
-		return cells;
+	public void setTopHashtag(List<TopHashtag> topHashtags) {
+		this.topHashtags = topHashtags;
 	}
-	public void setCells(ArrayList<String> cells) {
-		this.cells = cells;
+	public void addVenue(TopVenue venue){
+		topVenues.add(venue);
 	}
-	public String getAnomalyColumnName() {
-		return anomalyColumnName;
+	public void addHashtag(TopHashtag hashtag){
+		topHashtags.add(hashtag);
 	}
-	public void setAnomalyColumnName(String anomalyColumnName) {
-		this.anomalyColumnName = anomalyColumnName;
-	}
+
 	
 }

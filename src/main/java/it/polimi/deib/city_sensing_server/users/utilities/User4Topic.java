@@ -16,40 +16,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package it.polimi.deib.city_sensing_server.timeline;
+package it.polimi.deib.city_sensing_server.users.utilities;
 
 import java.util.ArrayList;
 
-public class FocusTimelineRequest {
+public class User4Topic {
+
+	private String URI;
+	private ArrayList<String> topics;
+	private boolean alreadyChecked = false;
 	
-	private String start;
-	private String end;
-	private ArrayList<String> cells;
-	private String anomalyColumnName;
+	public User4Topic() {
+		topics = new ArrayList<String>();
+	}
+	public String getURI() {
+		return URI;
+	}
+	public void setURI(String uRI) {
+		URI = uRI;
+	}
+	public ArrayList<String> getTopics() {
+		return topics;
+	}
+	public void setTopics(ArrayList<String> topic) {
+		this.topics = topic;
+	}
+
+	public void addElement(String topic){
+		this.topics.add(topic);
+	}
+
+	public int isIn(ArrayList<String> list){
+		int cont = 0;
+		for(String s : list){
+			if(topics.contains(s))
+				cont++;
+		}
+		return cont;
+	}
 	
-	public String getStart() {
-		return start;
+	public void setAlreadyChecked(){
+		alreadyChecked = true;
 	}
-	public void setStart(String start) {
-		this.start = start;
+	public boolean isAlreadyChecked() {
+		return alreadyChecked;
 	}
-	public String getEnd() {
-		return end;
+	public void setAlreadyChecked(boolean alreadyChecked) {
+		this.alreadyChecked = alreadyChecked;
 	}
-	public void setEnd(String end) {
-		this.end = end;
-	}
-	public ArrayList<String> getCells() {
-		return cells;
-	}
-	public void setCells(ArrayList<String> cells) {
-		this.cells = cells;
-	}
-	public String getAnomalyColumnName() {
-		return anomalyColumnName;
-	}
-	public void setAnomalyColumnName(String anomalyColumnName) {
-		this.anomalyColumnName = anomalyColumnName;
-	}
-	
+		
 }

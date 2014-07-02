@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Copyright 2014 DEIB - Politecnico di Milano
+ *    
+ * Marco Balduini (marco.balduini@polimi.it)
+ * Emanuele Della Valle (emanuele.dellavalle@polimi.it)
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 package it.polimi.city_sensing_server.bikes;
 
 import it.polimi.city_sensing_server.bikes.utilities.BikeStep;
@@ -97,10 +115,10 @@ public class BikeTimeLineDataServer extends ServerResource{
 						+ "FILTER(?graphGenTS >= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(bReq.getStart())) + "\"^^xsd:dateTime && ?graphGenTS <= \"" + GeneralUtilities.getXsdDateTime(Long.parseLong(bReq.getEnd())) + "\"^^xsd:dateTime) "
 						+ "{GRAPH ?g { "
 						+ "		?stall cse:availableBikes ?ab ; "
-						+ "		cse:availbaleStalls ?as ; "
-						+ "		sma:created_in ?cpRes . "
-						+ "		?cpRes cse:city_pixel_ID ?cpId . "
-						+ "		FILTER(?cpId > 0 && ?cpId < 10000) "
+						+ "		cse:availbaleStalls ?as . "
+						//						+ "		sma:created_in ?cpRes . "
+						//						+ "		?cpRes cse:city_pixel_ID ?cpId . "
+						//						+ "		FILTER(?cpId > 0 && ?cpId < 10000) "
 						+ "		} "
 						+ "	} "
 						+ "} "
@@ -122,8 +140,8 @@ public class BikeTimeLineDataServer extends ServerResource{
 						+ "		?stall cse:availableBikes ?ab ; "
 						+ "		cse:availbaleStalls ?as ; "
 						+ "		sma:created_in ?cpRes . "
-						+ "		?cpRes cse:city_pixel_ID ?cpId . "
-						+ "		FILTER(?cpId IN(" + cellListString + ")) "
+						//						+ "		?cpRes cse:city_pixel_ID ?cpId . "
+						+ " 	FILTER(xsd:long(substr(xsd:string(?cpRes),59)) IN (" + cellListString + ")) "
 						+ "		} "
 						+ "	} "
 						+ "} "

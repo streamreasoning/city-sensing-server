@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Copyright 2014 DEIB - Politecnico di Milano
+ *    
+ * Marco Balduini (marco.balduini@polimi.it)
+ * Emanuele Della Valle (emanuele.dellavalle@polimi.it)
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 package it.polimi.deib.city_sensing_server.map;
 
 import it.polimi.deib.city_sensing_server.configuration.Config;
@@ -96,7 +114,7 @@ public class MapDataServer extends ServerResource{
 					"AVG(" + anomalyColumnName + ") AS mobily_anomaly , SUM(n_tweets) AS social_activity, " + 
 					"((SUM(positive_tweets_number) * " + Config.getInstance().getSentimentPositiveCoefficient() + ") - (SUM(negative_tweets_number) * " + Config.getInstance().getSentimentNegativeCoefficient() + ") + (SUM(neutral_tweets_number)  * " + Config.getInstance().getSentimentNeutralCoefficient() + " )) AS social_sentiment , " + 
 					"((SUM(positive_tweets_number) * " + Config.getInstance().getSentimentPositiveCoefficient() + ") + (SUM(negative_tweets_number) * " + Config.getInstance().getSentimentNegativeCoefficient() + ") + (SUM(neutral_tweets_number)  * " + Config.getInstance().getSentimentNeutralCoefficient() + " )) AS weightedSocialActivity " +
-					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2 " +
+					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2_tmp " +
 					"WHERE square_ID IN (" + prepStmt + ") AND ts_ID > ? AND ts_ID < ? " +
 					"GROUP BY square_ID";
 

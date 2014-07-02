@@ -16,16 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package it.polimi.deib.city_sensing_server.timeline;
+package it.polimi.deib.city_sensing_server.topvenue_hashtag;
 
 import java.util.ArrayList;
 
-public class FocusTimelineRequest {
+public class TopVenueHashtagRequest {
 	
 	private String start;
 	private String end;
 	private ArrayList<String> cells;
-	private String anomalyColumnName;
 	
 	public String getStart() {
 		return start;
@@ -44,12 +43,6 @@ public class FocusTimelineRequest {
 	}
 	public void setCells(ArrayList<String> cells) {
 		this.cells = cells;
-	}
-	public String getAnomalyColumnName() {
-		return anomalyColumnName;
-	}
-	public void setAnomalyColumnName(String anomalyColumnName) {
-		this.anomalyColumnName = anomalyColumnName;
 	}
 	
 }

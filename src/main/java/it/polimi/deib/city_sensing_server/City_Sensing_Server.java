@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Copyright 2014 DEIB - Politecnico di Milano
+ *    
+ * Marco Balduini (marco.balduini@polimi.it)
+ * Emanuele Della Valle (emanuele.dellavalle@polimi.it)
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 package it.polimi.deib.city_sensing_server;
 
 import it.polimi.city_sensing_server.bikes.BikeTimeLineDataServer;
@@ -14,6 +32,7 @@ import it.polimi.deib.city_sensing_server.most_contacted_chart.MostContactedChar
 import it.polimi.deib.city_sensing_server.side_panel.SidePanelDataServer;
 import it.polimi.deib.city_sensing_server.timeline.ContextTimelineDataServer;
 import it.polimi.deib.city_sensing_server.timeline.FocusTimelineDataServer;
+import it.polimi.deib.city_sensing_server.topvenue_hashtag.TopVenueHashtagDataServer;
 import it.polimi.deib.city_sensing_server.users.UsersSADataServer;
 import it.polimi.deib.city_sensing_server.users.UsersTopDataServer;
 
@@ -83,6 +102,7 @@ public class City_Sensing_Server extends Application {
 		City_Sensing_Server server = new City_Sensing_Server();
 		component.getDefaultHost().attach("", server);
 
+		logger.debug("{} log4j configuration file", log4jConf);
 		logger.debug("Starting city sensing Server with parameters : ");
 		logger.debug("{}", component.getContext().getParameters().getFirst("maxThreads"));
 		logger.debug("{}", component.getContext().getParameters().getFirst("minThreads"));
@@ -124,6 +144,7 @@ public class City_Sensing_Server extends Application {
 		router.attach("/" + version + "/users/socialActivity",UsersSADataServer.class);
 		router.attach("/" + version + "/venues/top",VenuesTopDataServer.class);
 		router.attach("/" + version + "/venues/socialActivity",VenuesSADataServer.class);
+		router.attach("/" + version + "/top/venuesHahtag",TopVenueHashtagDataServer.class);
 
 
 		return router;

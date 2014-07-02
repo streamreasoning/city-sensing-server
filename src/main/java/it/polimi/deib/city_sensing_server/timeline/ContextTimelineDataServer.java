@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Copyright 2014 DEIB - Politecnico di Milano
+ *    
+ * Marco Balduini (marco.balduini@polimi.it)
+ * Emanuele Della Valle (emanuele.dellavalle@polimi.it)
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 package it.polimi.deib.city_sensing_server.timeline;
 
 import it.polimi.deib.city_sensing_server.configuration.Config;
@@ -36,6 +54,7 @@ public class ContextTimelineDataServer extends ServerResource{
 	@Post
 	public void dataServer(Representation rep) throws IOException {
 
+		int lastIndex = 0;
 
 		Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().serializeNulls().create();
 		Connection connection = null;
@@ -65,6 +84,12 @@ public class ContextTimelineDataServer extends ServerResource{
 			String prepStmt = new String();
 			String anomalyColumnName = new String();
 
+			if(cReq.getStart() == null || Long.parseLong(cReq.getStart()) < 0){
+				cReq.setStart(Config.getInstance().getDefaultStart());
+			}
+			if(cReq.getEnd() == null || Long.parseLong(cReq.getEnd()) < 0){
+				cReq.setEnd(Config.getInstance().getDefaultEnd());
+			}
 			if(cReq.getCells() == null || cReq.getCells().size() == 0){
 				for(int i = 1 ; i < Config.getInstance().getDefaultNumberOfCells() ; i++){
 					cellList.add(i);
@@ -91,13 +116,15 @@ public class ContextTimelineDataServer extends ServerResource{
 					"(SUM(incoming_call_number) + SUM(outgoing_call_number) + SUM(incoming_sms_number) + SUM(outgoing_sms_number) + SUM(data_cdr_number)) AS mobily_activity, " +
 					"((SUM(positive_tweets_number) * " + Config.getInstance().getSentimentPositiveCoefficient() + ") - (SUM(negative_tweets_number) * " + Config.getInstance().getSentimentNegativeCoefficient() + ") + (SUM(neutral_tweets_number)  * " + Config.getInstance().getSentimentNeutralCoefficient() + " )) AS social_sentiment , " + 
 					"((SUM(positive_tweets_number) * " + Config.getInstance().getSentimentPositiveCoefficient() + ") + (SUM(negative_tweets_number) * " + Config.getInstance().getSentimentNegativeCoefficient() + ") + (SUM(neutral_tweets_number)  * " + Config.getInstance().getSentimentNeutralCoefficient() + " )) AS weightedSocialActivity " +					
-					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2 " +
-					"WHERE square_ID IN (" + prepStmt + ") " +
+					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2_tmp " +
+					"WHERE square_ID IN (" + prepStmt + ") AND 3h_ts_id >= ? AND 3h_ts_id <= ? " +
 					"GROUP BY 3h_ts_id";
 
 			long startTs = System.currentTimeMillis();
 			p1 = connection.prepareStatement(sqlQuery);
-			insertValues(p1, 1, cellList);
+			lastIndex = insertValues(p1, 1, cellList);
+			p1.setObject(lastIndex + 1, Long.parseLong(cReq.getStart()));
+			p1.setObject(lastIndex + 2, Long.parseLong(cReq.getEnd()));
 			resultSet = p1.executeQuery();
 			long endTs = System.currentTimeMillis();
 
