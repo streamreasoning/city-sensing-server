@@ -165,8 +165,6 @@ public class BikeTimeLineDataServer extends ServerResource{
 
 			long tsInterval = 900000;
 
-			//			System.out.println(ResultSetFormatter.asText(rs));
-
 			while (rs.hasNext()) {
 				QuerySolution qs = (QuerySolution) rs.next();
 
