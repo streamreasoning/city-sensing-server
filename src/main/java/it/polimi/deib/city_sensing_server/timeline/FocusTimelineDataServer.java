@@ -117,7 +117,7 @@ public class FocusTimelineDataServer extends ServerResource{
 					"(SUM(incoming_call_number) + SUM(outgoing_call_number) + SUM(incoming_sms_number) + SUM(outgoing_sms_number) + SUM(data_cdr_number)) AS mobily_activity, " +
 					"((SUM(positive_tweets_number) * " + Config.getInstance().getSentimentPositiveCoefficient() + ") - (SUM(negative_tweets_number) * " + Config.getInstance().getSentimentNegativeCoefficient() + ") + (SUM(neutral_tweets_number)  * " + Config.getInstance().getSentimentNeutralCoefficient() + " )) AS social_sentiment , " + 
 					"((SUM(positive_tweets_number) * " + Config.getInstance().getSentimentPositiveCoefficient() + ") + (SUM(negative_tweets_number) * " + Config.getInstance().getSentimentNegativeCoefficient() + ") + (SUM(neutral_tweets_number)  * " + Config.getInstance().getSentimentNeutralCoefficient() + " )) AS weightedSocialActivity " +					
-					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2_tmp " +
+					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2 " +
 					"WHERE square_ID IN (" + prepStmt + ") AND ts_id >= ? AND ts_id <= ? " +
 					"GROUP BY ts_ID";
 

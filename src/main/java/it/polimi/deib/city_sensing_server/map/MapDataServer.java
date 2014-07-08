@@ -114,7 +114,7 @@ public class MapDataServer extends ServerResource{
 					"AVG(" + anomalyColumnName + ") AS mobily_anomaly , SUM(n_tweets) AS social_activity, " + 
 					"((SUM(positive_tweets_number) * " + Config.getInstance().getSentimentPositiveCoefficient() + ") - (SUM(negative_tweets_number) * " + Config.getInstance().getSentimentNegativeCoefficient() + ") + (SUM(neutral_tweets_number)  * " + Config.getInstance().getSentimentNeutralCoefficient() + " )) AS social_sentiment , " + 
 					"((SUM(positive_tweets_number) * " + Config.getInstance().getSentimentPositiveCoefficient() + ") + (SUM(negative_tweets_number) * " + Config.getInstance().getSentimentNegativeCoefficient() + ") + (SUM(neutral_tweets_number)  * " + Config.getInstance().getSentimentNeutralCoefficient() + " )) AS weightedSocialActivity " +
-					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2_tmp " +
+					"FROM NEW_MYISAM_INF_ABOUT_SQUARE_BY_TS_2 " +
 					"WHERE square_ID IN (" + prepStmt + ") AND ts_ID > ? AND ts_ID < ? " +
 					"GROUP BY square_ID";
 
