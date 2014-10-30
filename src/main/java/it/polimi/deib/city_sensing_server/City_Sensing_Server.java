@@ -20,6 +20,7 @@ package it.polimi.deib.city_sensing_server;
 
 import it.polimi.city_sensing_server.bikes.BikeTimeLineDataServer;
 import it.polimi.city_sensing_server.bikes.StallsDataServer;
+import it.polimi.city_sensing_server.top_topic.TopTopicDataServer;
 import it.polimi.deib.city_sensing_server.concept_flows.ConceptFlowsDataServer;
 import it.polimi.deib.city_sensing_server.concept_network.ConceptNetDataServer;
 import it.polimi.deib.city_sensing_server.configuration.Config;
@@ -145,6 +146,7 @@ public class City_Sensing_Server extends Application {
 		router.attach("/" + version + "/venues/top",VenuesTopDataServer.class);
 		router.attach("/" + version + "/venues/socialActivity",VenuesSADataServer.class);
 		router.attach("/" + version + "/top/venuesHahtag",TopVenueHashtagDataServer.class);
+		router.attach("/" + version + "/top/topic",TopTopicDataServer.class);
 
 
 		return router;

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-package it.polimi.city_sensing_server.topic_clustering;
+package it.polimi.city_sensing_server.top_topic;
 
 import java.io.IOException;
 
@@ -27,9 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class ConceptFlowsDataServer extends ServerResource{
+public class TopTopicDataServer extends ServerResource{
 
-	private Logger logger = LoggerFactory.getLogger(ConceptFlowsDataServer.class.getName());
+	private Logger logger = LoggerFactory.getLogger(TopTopicDataServer.class.getName());
 
 	@Post
 	public void dataServer(Representation rep) throws IOException {
