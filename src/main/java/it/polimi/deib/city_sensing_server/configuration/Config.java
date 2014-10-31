@@ -29,19 +29,23 @@ public class Config {
 	private static Config _instance = null;
 	private static final Logger logger = LoggerFactory.getLogger(Config.class); 
 	
-	private Configuration config;
+	private static Configuration config;
 	
-	private Config(){
+	private Config(String propertiesFilePath){
 		try {
-			config = new PropertiesConfiguration("setup.properties");
+			config = new PropertiesConfiguration(propertiesFilePath);
 		} catch (ConfigurationException e) {
 			logger.error("Error while reading the configuration file", e);
 		}
 	}
 	
-	public static Config getInstance(){
+	public static void initialize(String propertiesFilePath){
+		_instance = new Config(propertiesFilePath);
+	}
+	
+	public static Config getInstance() throws Exception{
 		if(_instance==null)
-			_instance=new Config();
+			throw new Exception("Please initialize the configuration object at server startup");
 		return _instance;
 	}
 		
@@ -143,6 +147,36 @@ public class Config {
 	
 	public String getBikemiSparqlEndpointURL(){
 		return config.getString("bikemi.sparql.dataset.url");
+	}
+	
+	//Topic service
+	
+	public String getTopicHostname(){
+		return config.getString("topic.hostname");
+	}
+	
+	public String getTopicPort(){
+		return config.getString("topic.port");
+	}
+	
+	public String getTopicUsername(){
+		return config.getString("topic.username");
+	}
+	
+	public String getTopicPassword(){
+		return config.getString("topic.password");
+	}
+	
+	public String getTopicDBName(){
+		return config.getString("topic.db_name");
+	}
+	
+	public String getTopicCoocThreshold(){
+		return config.getString("topic.cooc_threshold");
+	}
+	
+	public String getTopicMaxIterKMeans(){
+		return config.getString("topic.max_iter_kmeans");
 	}
 	
 }

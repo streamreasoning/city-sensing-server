@@ -179,6 +179,8 @@ public class VenuesSADataServer extends ServerResource{
 			this.getResponse().commit();
 			this.commit();	
 			this.release();		
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 		} finally {
 			if(qexec != null)
 				qexec.close();
