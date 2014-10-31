@@ -59,12 +59,22 @@ import org.slf4j.LoggerFactory;
 public class City_Sensing_Server extends Application {
 
 	private static Logger logger = LoggerFactory.getLogger(City_Sensing_Server.class.getName());
-	private static String version = Config.getInstance().getServerVersion();
+	private static String version;
+	private static String propertiesFilePath;
 
 	//	public static BasicDataSource bds;
 
 	public static void main(String[] args) throws Exception{
+		
+		if(args.length > 0){
+			propertiesFilePath = args[0];
+		} else {
+			propertiesFilePath = "properties_files/setup.properties";
+		}
+		
+		Config.initialize(propertiesFilePath);
 
+		version = Config.getInstance().getServerVersion();
 		String log4jConf = Config.getInstance().getLog4jConfFilePath();
 
 		if(log4jConf.startsWith("http://"))

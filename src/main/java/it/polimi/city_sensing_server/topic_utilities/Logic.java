@@ -16,74 +16,79 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Logic {
-	
+
 	static CharsetEncoder asciiEncoder = Charset.forName("ISO-8859-1").newEncoder(); 
+	private static Logger logger = LoggerFactory.getLogger(Logic.class);
+	
 	
 	public static boolean isPureAscii(String v) {
 		return asciiEncoder.canEncode(v);
 	}
-	
+
 	public class patternElement {
 		private Date date;
 		private int hour;
 		private int occ;
-		
+
 		public void setDate(Date date){
 			this.date = date;
 		}
-		
+
 		public void setHour(int hour){
 			this.hour = hour;
 		}
-		
+
 		public void setOcc(int occ){
 			this.occ = occ;
 		}
-		
+
 		public Date getDate(){
 			return this.date;
 		}
-		
+
 		public int getHour(){
 			return this.hour;
 		}
-		
+
 		public int getOcc(){
 			return this.occ;
 		}
 	}
-	
+
 	public class DateSlot {
 		private Date startDate;
 		private Date endDate;
-		
+
 		public DateSlot() {	
 		}
-		
+
 		public void setStartDate(Date startDate){
 			this.startDate = startDate;
 		}
-		
+
 		public void setEndDate(Date endDate){
 			this.endDate = endDate;
 		}
-		
+
 		public Date getStartDate(){
 			return this.startDate;
 		}
-		
+
 		public Date getEndDate() {
 			return this.endDate;
 		}
-		
+
 		public int getDayDifference(){
 			long diff = this.endDate.getTime() - this.startDate.getTime();
 			int dayDiff = (int) (diff / 86400000);
 			return dayDiff + 1;
 		}
 	}
-	
+
 	protected Connection conn;
 	protected double[][] pattern;
 	protected Date[] datePattern;
@@ -92,31 +97,37 @@ public class Logic {
 	protected DateFormat format = new SimpleDateFormat("dd/MM/yyyy"); 
 	private Date maxDate;
 	private Date minDate;
-	
+
 	public Logic() throws ClassNotFoundException, SQLException {
-		String HOST = Config.getInstance().getTopicHostname();
-		String PORT = Config.getInstance().getTopicPort();
-		String USER = Config.getInstance().getTopicUsername();
-		String PWD = Config.getInstance().getTopicPassword();
-		String DB = Config.getInstance().getTopicDBName();
-		Class.forName("org.postgresql.Driver");
-		conn=DriverManager.getConnection("jdbc:postgresql://"+HOST+":"+PORT+"/"+DB, USER, PWD);
-		minDate = getDateLimit(0);
-		maxDate = getDateLimit(1);
+		String HOST;
+		try {
+			HOST = Config.getInstance().getTopicHostname();
+			String PORT = Config.getInstance().getTopicPort();
+			String USER = Config.getInstance().getTopicUsername();
+			String PWD = Config.getInstance().getTopicPassword();
+			String DB = Config.getInstance().getTopicDBName();
+			Class.forName("org.postgresql.Driver");
+			conn=DriverManager.getConnection("jdbc:postgresql://"+HOST+":"+PORT+"/"+DB, USER, PWD);
+			minDate = getDateLimit(0);
+			maxDate = getDateLimit(1);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+
+		}
 	}
-	
+
 	public DateFormat getDateFormat() {
 		return this.format;
 	}
-	
+
 	public Date minDate(){
 		return minDate;
 	}
-	
+
 	public Date maxDate(){
 		return maxDate;
 	}
-	
+
 	public String[] getTopHashtag(Date startDate, Date endDate) throws SQLException, ParseException {
 		ArrayList<String> topHashtag = new ArrayList<String>();
 		String query ="select h.tag from hashtag h join occorrenza o on h.pk_tag = o.tag join tweet t on o.tweet = t.pk_tweet where t.day >= ? and t.day <= ? group by h.tag order by count(*) desc";
@@ -133,7 +144,7 @@ public class Logic {
 		}
 		return listToVector(topHashtag);
 	}
-	
+
 	public void buildDatePattern(int dayMode, int dim){
 		dateSlotPattern = new DateSlot[dim];
 		for(int i=0; i<dateSlotPattern.length; i++){
@@ -205,7 +216,7 @@ public class Logic {
 		}
 		}
 	}
-	
+
 	public void buildAggregatePattern(String hashtag, int dayMode, int timeMode, int d1, int d2) throws IndexOutOfBoundsException, SQLException{
 		aggregatePattern = new double[d1][d2];
 		extractPattern(hashtag);
@@ -213,13 +224,13 @@ public class Logic {
 		tempPattern = sumDays(dayMode, d1);
 		aggregatePattern = sumHours(tempPattern, timeMode, d2);
 	}
-	
+
 	public void buildAggregateMinutePattern(String hashtag, int startHour, int endHour, int minuteOffset) throws SQLException {
 		extractMinutePattern(hashtag, startHour, endHour);
 		aggregatePattern = new double[24][60 / minuteOffset];
 		aggregatePattern = sumMinutes(minuteOffset);
 	}
-	
+
 	private double[][] sumMinutes(int minuteOffset) {
 		double[][] aggregate = new double[24][60 / minuteOffset];
 		for(int i=0; i<24; i++){
@@ -229,19 +240,19 @@ public class Logic {
 		}
 		return aggregate;
 	}
-	
+
 	public double getAggregatePattern(int i, int j){
 		return aggregatePattern[i][j];
 	}
-	
+
 	public int getAggregatePatternLength(){
 		return aggregatePattern.length;
 	}
-	
+
 	public int getAggregatePatternNumRow(){
 		return aggregatePattern[0].length;
 	}
-	
+
 	public void buildAggregatePattern(String hashtag, Date startDate, Date endDate, int dayMode, int timeMode, int d1, int d2) throws IndexOutOfBoundsException, SQLException{
 		aggregatePattern = new double[d1][d2];
 		extractPattern(hashtag, startDate, endDate);
@@ -249,7 +260,7 @@ public class Logic {
 		tempPattern = sumDays(dayMode, d1);
 		aggregatePattern = sumHours(tempPattern, timeMode, d2);
 	}
-	
+
 	public void buildAggregateCumulativePattern(String[] hashtags, Date startDate, Date endDate, int dayMode, int timeMode, int d1, int d2) throws SQLException {
 		aggregatePattern = new double[d1][d2];
 		extractCumulativePattern(hashtags, startDate, endDate);
@@ -257,7 +268,7 @@ public class Logic {
 		tempPattern = sumDays(dayMode, d1);
 		aggregatePattern = sumHours(tempPattern, timeMode, d2);
 	}
-	
+
 	private void extractCumulativePattern(String[] hashtags, Date startDate, Date endDate) throws SQLException {
 		buildEmptyPattern(startDate, endDate);
 		String query = "select T.day, T.hour, count(distinct(T.tweet)) from occorrenza O join tweet T on O.tweet = T.pk_tweet where T.day >= ? and T.day <= ? and (O.tag = ?";
@@ -276,33 +287,33 @@ public class Logic {
 			pattern[getDateIndex(rs.getDate(1))][rs.getInt(2)] = rs.getInt(3);
 		}
 	}
-	
+
 	public class CooccourenceValueVector {
 		private String tag;
 		private double value;
-		
+
 		public CooccourenceValueVector(String tag, double value){
 			this.tag = tag;
 			this.value = value;
 		}
-		
+
 		public void setTag(String tag){
 			this.tag = tag;
 		}
-		
+
 		public void setValue(double value){
 			this.value = value;
 		}
-		
+
 		public String getTag(){
 			return this.tag;
 		}
-		
+
 		public double getValue() {
 			return this.value;
 		}
 	}
-	
+
 	public ArrayList<CooccourenceValueVector> getCooccourenceValueVector(String h1, String startDate, String endDate) throws SQLException, ParseException {
 		ArrayList<CooccourenceValueVector> cvv = new ArrayList<CooccourenceValueVector>();
 		String totalQuery = "select sum(occorrenze) from hitforday where tag = ? and day >=? and day <= ?";
@@ -328,7 +339,7 @@ public class Logic {
 		}
 		return cvv;
 	}
-	
+
 	public void buildAggregateAuthorPattern(String author, int dayMode, int timeMode, int d1, int d2) throws IndexOutOfBoundsException, SQLException{
 		aggregatePattern = new double[d1][d2];
 		extractAuthorPattern(author);
@@ -336,7 +347,7 @@ public class Logic {
 		tempPattern = sumDays(dayMode, d1);
 		aggregatePattern = sumHours(tempPattern, timeMode, d2);
 	}
-	
+
 	public void buildAggregateAuthorPattern(String author, Date startDate, Date endDate, int dayMode, int timeMode, int d1, int d2) throws IndexOutOfBoundsException, SQLException {
 		aggregatePattern = new double[d1][d2];
 		extractAuthorPattern(author, startDate, endDate);
@@ -344,7 +355,7 @@ public class Logic {
 		tempPattern = sumDays(dayMode, d1);
 		aggregatePattern = sumHours(tempPattern, timeMode, d2);
 	}
-	
+
 	private double[][] sumDays(int dayMode, int d1) {
 		double[][] summerizedPattern = new double[d1][pattern[0].length];
 		switch(dayMode){
@@ -396,14 +407,14 @@ public class Logic {
 			}
 			break;}
 		}
-		
+
 		return summerizedPattern;
 	}
-	
+
 	public Date getDatePattern(int index){
 		return datePattern[index];
 	}
-	
+
 	protected double[][] sumHours(double[][] pattern, int timeMode, int d2){
 		double[][] summerizedPattern = new double[pattern.length][d2];
 		for(int i=0; i<summerizedPattern.length; i++){
@@ -420,7 +431,7 @@ public class Logic {
 		}
 		return summerizedPattern;
 	}
-	
+
 	public String getParsedSlotDate(int index){
 		String slotDate = null;
 		slotDate = format.format(dateSlotPattern[index].getStartDate()) + 
@@ -428,7 +439,7 @@ public class Logic {
 				format.format(dateSlotPattern[index].getEndDate());
 		return slotDate;
 	}
-	
+
 	public String[] listToVector(ArrayList<String> list){
 		String[] vector = new String[list.size()];
 		for(int i=0; i<list.size(); i++){
@@ -436,7 +447,7 @@ public class Logic {
 		}
 		return vector;
 	}
-	
+
 	protected void extractAuthorPattern(String author, Date startDate, Date endDate) throws SQLException, IndexOutOfBoundsException {
 		buildEmptyPattern(startDate, endDate);
 		String query = "select T.day, T.hour, count(T.tweet) from tweet T join autore A on T.author = A.pk_auth where A.author = ? and T.day >= ? and T.day <= ? group by T.day, T.hour";
@@ -449,7 +460,7 @@ public class Logic {
 			pattern[getDateIndex(rs.getDate(1))][rs.getInt(2)] = rs.getInt(3);
 		}
 	}
-	
+
 	protected void extractPattern(String tag, Date startDate, Date endDate) throws SQLException, IndexOutOfBoundsException{
 		buildEmptyPattern(startDate, endDate);
 		String query = "select T.day, T.hour, count(O.tweet) from tweet T join occorrenza O on T.pk_tweet = O.tweet join hashtag H on O.tag = H.pk_tag where H.tag = ? and T.day >= ? and T.day <= ? group by T.day, T.hour";
@@ -462,7 +473,7 @@ public class Logic {
 			pattern[getDateIndex(rs.getDate(1))][rs.getInt(2)] = rs.getInt(3);
 		}
 	}
-	
+
 	protected void extractMinutePattern(String tag, int startHour, int endHour) throws SQLException {
 		buildEmptyMinutePattern();
 		String query = "select T.minute, count(O.tweet) from tweet T join occorrenza O on T.pk_tweet = O.tweet join hashtag H on O.tag = H.pk_tag where H.tag = ? and T.hour = ? group by T.minute";
@@ -495,7 +506,7 @@ public class Logic {
 			}
 		}
 	}
-	
+
 	private void buildEmptyMinutePattern() {
 		pattern = new double[24][60];
 		for(int i=0; i<pattern.length; i++){
@@ -514,7 +525,7 @@ public class Logic {
 		}
 		return -1;
 	}
-	
+
 	protected int getHourIndex(int hour, int timeMode){
 		switch(timeMode) {
 		case 0: {
@@ -531,20 +542,20 @@ public class Logic {
 			} else {
 				return 4;
 			}
-			}
+		}
 		case 2: {
 			if(hour < 13){
 				return 0;
 			} else {
 				return 1;
 			}
-			}
+		}
 		case 3: {
 			return 0;}
 		}
 		return -1;
 	}
-	
+
 	private void buildEmptyPattern(Date startDate, Date endDate){
 		pattern = new double[dayDifference(startDate, endDate) + 1][24];
 		datePattern = new Date[pattern.length];
@@ -555,38 +566,38 @@ public class Logic {
 			datePattern[i] = new Date(currentDate.getTime());
 		}
 	}
-	
+
 	protected java.sql.Date parseUtilDate(java.util.Date utilDate){
 		java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
 		return sqlDate;
 	}
-	
+
 	protected java.util.Date parseSqlDate(java.sql.Date sqlDate){
 		java.util.Date utilDate = new java.util.Date(sqlDate.getTime());
 		return utilDate;
 	}
-	
+
 	public int dayDifference(Date startDate, Date endDate){
 		long diff = endDate.getTime() - startDate.getTime();
 		return (int) (diff / 86400000);
 	}
-	
+
 	public int getMaxDayDifference(){
 		return dayDifference(minDate(), maxDate());
 	}
-	
+
 	protected void extractAuthorPattern(String author) throws IndexOutOfBoundsException, SQLException{
 		extractAuthorPattern(author, minDate(), maxDate());
 	}
-	
+
 	protected void extractPattern(String tag) throws IndexOutOfBoundsException, SQLException{
 		extractPattern(tag, minDate(), maxDate());
 	}
-	
+
 	protected double[][] getPattern(){
 		return this.pattern;
 	}
-	
+
 	protected void resetPattern(){
 		for(int i=0; i<pattern.length; i++){
 			for(int j=0; j<pattern[0].length; j++){
@@ -594,12 +605,12 @@ public class Logic {
 			}
 		}
 	}
-	
+
 	protected int getHashtagCode(String tag) throws SQLException {
 		/**
 		 * Returns the primary-key code of the tag given by parameter
 		 */
-			
+
 		String query = "select pk_tag from hashtag where tag = ?";
 		PreparedStatement stat = conn.prepareStatement(query);
 		stat.setString(1, tag);
@@ -607,7 +618,7 @@ public class Logic {
 		rs.next();
 		return rs.getInt(1);
 	}
-	
+
 	protected String getHashtagByCode(int code) throws SQLException {
 		String query ="select tag from hashtag where pk_tag = ?";
 		PreparedStatement pstat = conn.prepareStatement(query);
@@ -618,7 +629,7 @@ public class Logic {
 		}
 		return null;
 	}
-	
+
 	public int getNumWeeks() throws SQLException {
 		/**
 		 * Returns the total number of weeks in the database
@@ -629,7 +640,7 @@ public class Logic {
 		rs.next();
 		return rs.getInt(1);
 	}
-	
+
 	public Date getDateLimit(int flag) throws SQLException {
 		/**
 		 * flag = 0 --> data iniziale
@@ -651,7 +662,7 @@ public class Logic {
 			return null;
 		}
 	}
-	
+
 	public String[] getDateList() throws SQLException {
 		ArrayList<String> dateList = new ArrayList<String>();
 		String query = "select day from days order by day";
@@ -662,7 +673,7 @@ public class Logic {
 		}
 		return listToVector(dateList);
 	}
-	
+
 	public int getNumSlot() throws SQLException{
 		/**
 		 * Returns the total number of timeslot in the database
@@ -673,14 +684,14 @@ public class Logic {
 		rs.next();
 		return rs.getInt(1);
 	}
-	
+
 	public int[] getRgbCode(double value, double max){
 		int[] rgb = new int[3];
 		rgb[0] = 255;
 		rgb[2] = rgb[1] = (int)(255 - ((value * 255) / max));
 		return rgb;
 	}
-	
+
 	public double[][] buildCumulativePattern(String[] hashtagList, int length, Date startDate, Date endDate, int d2, int timeMode) throws SQLException {
 		double[] pattern = new double[length];
 		for(int i=0; i<length; i++){
@@ -704,7 +715,7 @@ public class Logic {
 		double[][] tempPattern = getPattern(pattern, 24);
 		return sumHours(tempPattern, timeMode, d2);
 	}
-	
+
 	private double[][] getPattern(double[] vector, int s){
 		double pattern[][] = new double[vector.length / s][s];
 		for(int i=0; i<vector.length/s; i++){
@@ -714,7 +725,7 @@ public class Logic {
 		}
 		return pattern;
 	}
-	
+
 	public int[] setPatternDimension(int dayMode, int timeMode, String startDate, String endDate) throws ParseException {
 		int[] dimensions = new int[2];
 		int days = -1;
@@ -728,54 +739,54 @@ public class Logic {
 		month = format.parse(endDate).getMonth() - format.parse(startDate).getMonth() + 1;
 		int d1 = -1; int d2 = -1;
 		switch (dayMode){
-			case 0: {
-				d1 = days;
+		case 0: {
+			d1 = days;
 			break; }
-			case 1: {
-				if((format.parse(startDate).getDay()==0) || (format.parse(startDate).getDay()==6)){
-					if((format.parse(endDate).getDay()==0) || (format.parse(endDate).getDay()==6)){
-						d1 = (weeks * 2) - 1;
-					} else {
-						d1 = (weeks * 2) - 2;
-					}
+		case 1: {
+			if((format.parse(startDate).getDay()==0) || (format.parse(startDate).getDay()==6)){
+				if((format.parse(endDate).getDay()==0) || (format.parse(endDate).getDay()==6)){
+					d1 = (weeks * 2) - 1;
 				} else {
-					if((format.parse(endDate).getDay()==0) || (format.parse(endDate).getDay()==6)){
-						d1 = weeks * 2;
-					} else {
-						d1 = (weeks * 2) - 1;
-					}
+					d1 = (weeks * 2) - 2;
 				}
-			break; }
-			case 2: {
-				d1 = weeks;
-			break; }
-			case 3: {
-				if((format.parse(startDate).getDate()>15) && (format.parse(endDate).getDate()<16)){
-					d1 = (month * 2) - 2;
-				} else if ((format.parse(startDate).getDate()>15) && (format.parse(endDate).getDate()>15)){
-					d1 = (month * 2) - 1;
-				} else if ((format.parse(startDate).getDate()<16) && (format.parse(endDate).getDate()<16)) {
-					d1 = (month * 2) - 1;
+			} else {
+				if((format.parse(endDate).getDay()==0) || (format.parse(endDate).getDay()==6)){
+					d1 = weeks * 2;
 				} else {
-					d1 = month * 2;
+					d1 = (weeks * 2) - 1;
 				}
+			}
 			break; }
-			case 4: {
-				d1 = month;
+		case 2: {
+			d1 = weeks;
+			break; }
+		case 3: {
+			if((format.parse(startDate).getDate()>15) && (format.parse(endDate).getDate()<16)){
+				d1 = (month * 2) - 2;
+			} else if ((format.parse(startDate).getDate()>15) && (format.parse(endDate).getDate()>15)){
+				d1 = (month * 2) - 1;
+			} else if ((format.parse(startDate).getDate()<16) && (format.parse(endDate).getDate()<16)) {
+				d1 = (month * 2) - 1;
+			} else {
+				d1 = month * 2;
+			}
+			break; }
+		case 4: {
+			d1 = month;
 			break; }
 		}
 		switch (timeMode){
-			case 0: {
-				d2 = 24;
+		case 0: {
+			d2 = 24;
 			break; }
-			case 1: {
-				d2 = 5;
+		case 1: {
+			d2 = 5;
 			break; }
-			case 2: {
-				d2 = 2;
+		case 2: {
+			d2 = 2;
 			break; }
-			case 3: {
-				d2 = 1;
+		case 3: {
+			d2 = 1;
 			break; }
 		}
 		dimensions[0] = d1;
@@ -783,7 +794,7 @@ public class Logic {
 		pattern = new double[d1][d2];
 		return dimensions;
 	}
-	
+
 	public int[] setPatternDimension(int dayMode, int timeMode) {
 		int[] dimensions = new int[2];
 		int days = getMaxDayDifference() + 1;
@@ -793,54 +804,54 @@ public class Logic {
 		int month = maxDate().getMonth() - minDate().getMonth() + 1;
 		int d1 = -1; int d2 = -1;
 		switch (dayMode){
-			case 0: {
-				d1 = days;
+		case 0: {
+			d1 = days;
 			break; }
-			case 1: {
-				if((minDate().getDay()==0) || (minDate().getDay()==6)){
-					if((maxDate().getDay()==0) || (maxDate().getDay()==6)){
-						d1 = (weeks * 2) - 1;
-					} else {
-						d1 = (weeks * 2) - 2;
-					}
+		case 1: {
+			if((minDate().getDay()==0) || (minDate().getDay()==6)){
+				if((maxDate().getDay()==0) || (maxDate().getDay()==6)){
+					d1 = (weeks * 2) - 1;
 				} else {
-					if((maxDate().getDay()==0) || (maxDate().getDay()==6)){
-						d1 = weeks * 2;
-					} else {
-						d1 = (weeks * 2) - 1;
-					}
+					d1 = (weeks * 2) - 2;
 				}
-			break; }
-			case 2: {
-				d1 = weeks;
-			break; }
-			case 3: {
-				if((minDate().getDate()>15) && (maxDate().getDate()<16)){
-					d1 = (month * 2) - 2;
-				} else if ((minDate().getDate()>15) && (maxDate().getDate()>15)){
-					d1 = (month * 2) - 1;
-				} else if ((minDate().getDate()<16) && (maxDate().getDate()<16)) {
-					d1 = (month * 2) - 1;
+			} else {
+				if((maxDate().getDay()==0) || (maxDate().getDay()==6)){
+					d1 = weeks * 2;
 				} else {
-					d1 = month * 2;
+					d1 = (weeks * 2) - 1;
 				}
+			}
 			break; }
-			case 4: {
-				d1 = month;
+		case 2: {
+			d1 = weeks;
+			break; }
+		case 3: {
+			if((minDate().getDate()>15) && (maxDate().getDate()<16)){
+				d1 = (month * 2) - 2;
+			} else if ((minDate().getDate()>15) && (maxDate().getDate()>15)){
+				d1 = (month * 2) - 1;
+			} else if ((minDate().getDate()<16) && (maxDate().getDate()<16)) {
+				d1 = (month * 2) - 1;
+			} else {
+				d1 = month * 2;
+			}
+			break; }
+		case 4: {
+			d1 = month;
 			break; }
 		}
 		switch (timeMode){
-			case 0: {
-				d2 = 24;
+		case 0: {
+			d2 = 24;
 			break; }
-			case 1: {
-				d2 = 5;
+		case 1: {
+			d2 = 5;
 			break; }
-			case 2: {
-				d2 = 2;
+		case 2: {
+			d2 = 2;
 			break; }
-			case 3: {
-				d2 = 1;
+		case 3: {
+			d2 = 1;
 			break; }
 		}
 		dimensions[0] = d1;
@@ -848,7 +859,7 @@ public class Logic {
 		pattern = new double[d1][d2];
 		return dimensions;
 	}
-	
+
 	private Date findWeekLimit(Date date, int mode){
 		/**
 		 * mode = 0 --> find start of the week
@@ -871,7 +882,7 @@ public class Logic {
 		}
 		return null;
 	}
-	
+
 	public int[] getAllTimeSlotLimit(int timeMode){
 		int[] allTimeSlot = null;
 		switch(timeMode){
@@ -910,7 +921,7 @@ public class Logic {
 		}
 		return allTimeSlot;
 	}
-	
+
 	public int[] getTimeSlotLimit(int timeSlot, int timeMode){
 		int[] timeSlotLimit = new int[2];
 		switch(timeMode){
@@ -959,7 +970,7 @@ public class Logic {
 			timeSlotLimit[1] = 24;
 			break;}
 		}
-	return timeSlotLimit;
+		return timeSlotLimit;
 	}
 
 }

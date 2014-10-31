@@ -13,6 +13,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.sf.javaml.clustering.Clusterer;
 import net.sf.javaml.clustering.KMeans;
 import net.sf.javaml.core.Dataset;
@@ -33,13 +36,19 @@ public class TopicLogic extends Logic{
 	
 	static CharsetEncoder asciiEncoder = Charset.forName("ISO-8859-1").newEncoder(); 
 	
+	private static Logger logger = LoggerFactory.getLogger(TopicLogic.class);
+	
 	public static boolean isPureAscii(String v) {
 		return asciiEncoder.canEncode(v);
 	}
 	
 	public TopicLogic(ClusterList clusterList) throws ClassNotFoundException, SQLException {
 		super();
-		NUM_ITER = Integer.parseInt(Config.getInstance().getTopicMaxIterKMeans());
+		try {
+			NUM_ITER = Integer.parseInt(Config.getInstance().getTopicMaxIterKMeans());
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
 		this.clusterList = clusterList;
 	}
 	
