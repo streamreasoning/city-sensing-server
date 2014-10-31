@@ -145,4 +145,34 @@ public class Config {
 		return config.getString("bikemi.sparql.dataset.url");
 	}
 	
+	//Topic service
+	
+	public String getTopicHostname(){
+		return config.getString("topic.hostname");
+	}
+	
+	public String getTopicPort(){
+		return config.getString("topic.port");
+	}
+	
+	public String getTopicUsername(){
+		return config.getString("topic.username");
+	}
+	
+	public String getTopicPassword(){
+		return config.getString("topic.password");
+	}
+	
+	public String getTopicDBName(){
+		return config.getString("topic.db_name");
+	}
+	
+	public String getTopicCoocThreshold(){
+		return config.getString("topic.cooc_threshold");
+	}
+	
+	public String getTopicMaxIterKMeans(){
+		return config.getString("topic.max_iter_kmeans");
+	}
+	
 }

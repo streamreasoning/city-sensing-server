@@ -1,34 +1,7 @@
-/*******************************************************************************
- * Copyright 2014 DEIB - Politecnico di Milano
- *    
- * Marco Balduini (marco.balduini@polimi.it)
- * Emanuele Della Valle (emanuele.dellavalle@polimi.it)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *   http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
-package it.polimi.city_sensing_server.top_topic;
-
-import it.polimi.city_sensing_server.topic_utilities.Cluster;
-import it.polimi.city_sensing_server.topic_utilities.ClusterList;
-import it.polimi.city_sensing_server.topic_utilities.TopicLogic;
-import it.polimi.deib.city_sensing_server.concept_network.ConceptNetRequest;
-import it.polimi.deib.city_sensing_server.configuration.Config;
+package it.polimi.deib.city_sensing_server.topic_network;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -37,6 +10,12 @@ import java.util.GregorianCalendar;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+
+import it.polimi.city_sensing_server.topic_utilities.Cluster;
+import it.polimi.city_sensing_server.topic_utilities.ClusterList;
+import it.polimi.city_sensing_server.topic_utilities.CooccourenceMatrix;
+import it.polimi.city_sensing_server.topic_utilities.TopicLogic;
+import it.polimi.deib.city_sensing_server.configuration.Config;
 
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
@@ -52,26 +31,28 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 
-
-public class TopTopicDataServer extends ServerResource{
-
-	private Logger logger = LoggerFactory.getLogger(TopTopicDataServer.class.getName());
-
-	private final double THRESHOLD_VAL = 5;
+public class TopicNetworkDataServer extends ServerResource{
 	
+	private Logger logger = LoggerFactory.getLogger(TopicNetworkDataServer.class.getName());
+	
+	private final double THRESHOLD_VAL = 5;
+	private final double SCALE_FACTOR = 10.0; // fattore di scala per distanze tra centri di cluster
+
 	private ClusterList clusterList;
 	private TopicLogic logic;
 
+	private CooccourenceMatrix m;
+
 	private int DAYMODE = 0;
 	private int TIMEMODE;
-
+	
 	@Post
 	public void dataServer(Representation rep) throws IOException {
 
 		Gson gson = new GsonBuilder().serializeNulls().serializeSpecialFloatingPointValues().create();
 		try {
 
-			logger.debug("Top topic request received");
+			logger.debug("Topic network request received");
 			String parameters = rep.getText();
 			logger.debug("parameters: {}",parameters);
 
@@ -86,7 +67,7 @@ public class TopTopicDataServer extends ServerResource{
 
 			reader = new JsonReader(new StringReader(parameters));
 
-			TopTopicRequest cnReq = gson.fromJson(reader, TopTopicRequest.class);
+			TopicNetworkRequest cnReq = gson.fromJson(reader, TopicNetworkRequest.class);
 
 			ArrayList<Integer> cellList = new ArrayList<Integer>();
 
@@ -114,16 +95,55 @@ public class TopTopicDataServer extends ServerResource{
 			logic.setParameters(setKParameter(logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getStart()))), logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getEnd())))), THRESHOLD_VAL);
 			logic.buildClusters(longToDate(Long.parseLong(cnReq.getStart())), longToDate(Long.parseLong(cnReq.getEnd())), DAYMODE, TIMEMODE, numDay, getNumTimeSlot(TIMEMODE));
 			Cluster[] clusters = clusterList.getClusterVector();
-			ArrayList<Topic> topicList = new ArrayList<Topic>();
+			
+			ArrayList<TopicNetworkNode> topicNetNodes = new ArrayList<TopicNetworkNode>();
+			ArrayList<TopicNetworkLink> topicNetLinks = new ArrayList<TopicNetworkLink>();
+			int id = 0;
+			
 			for(int i=0; i<clusters.length; i++){
-				Topic currentTopic = new Topic();
-				currentTopic.setLabel(clusters[i].getTagListAsString());
-				currentTopic.setValue(clusters[i].getRelevance());
-				topicList.add(currentTopic);
-				
+				for(int j=0; j<clusters[i].getDim(); j++){
+					TopicNetworkNode node = new TopicNetworkNode();
+					TopicNetworkLink link = new TopicNetworkLink();
+					node.setLabel(clusters[i].getTag(j));
+					node.setGroup(Integer.toString(i));
+					node.setId(Integer.toString(id));
+					node.setValue(Double.toString(clusters[i].getElementRelevance(j)));
+					topicNetNodes.add(node);
+					int source = getUniqueId(topicNetNodes, clusters[i].getClusterCenter().getTag());
+					if(source != id){
+						link.setSource(getUniqueId(topicNetNodes, clusters[i].getClusterCenter().getTag()));
+						link.setTarget(id);
+						link.setValue(clusters[i].getDistance(j));
+						topicNetLinks.add(link);
+					}
+					id++;
+				}
 			}
-			TopTopicResponse response = new TopTopicResponse();
-			response.setTopics(topicList);
+			
+			String[] tag;
+			ArrayList<String> tagList = new ArrayList<String>();
+			for(int i=0; i<clusterList.getNumClusters()+1; i++){
+				tagList.add(new String(clusterList.getClusterClass(i).getClusterCenter().getTag()));
+			}
+			m = new CooccourenceMatrix(tagList.size());
+			tag = logic.listToVector(tagList);
+			logic.buildMatrix(m, tag);
+			for(int i=0; i<m.getMatrixDimension(); i++){
+				for(int j=i+1; j<m.getMatrixDimension(); j++){
+					TopicNetworkLink link = new TopicNetworkLink();
+					if(10 * (1 - m.getMatrixValue(i, j)) < 10.0){
+						link.setSource(getUniqueId(topicNetNodes, clusters[i].getClusterCenter().getTag()));
+						link.setTarget(getUniqueId(topicNetNodes, clusters[j].getClusterCenter().getTag()));
+						link.setValue(10 * (1 - m.getMatrixValue(i, j)));
+						topicNetLinks.add(link);
+					}
+				}
+			}
+			
+			TopicNetworkResponse response = new TopicNetworkResponse();
+			response.setNodes(topicNetNodes);
+			response.setLinks(topicNetLinks);
+			
 			
 			String respString = gson.toJson(response);
 			
@@ -135,7 +155,6 @@ public class TopTopicDataServer extends ServerResource{
 			this.release();
 			
 		} catch (Exception ex){
-			ex.printStackTrace();
 			logger.error(ex.getMessage(), ex);
 			String error = "Generic error";
 			rep.release();
@@ -146,8 +165,16 @@ public class TopTopicDataServer extends ServerResource{
 			this.release();
 		} finally {
 			rep.release();
-
 		}
+	}
+	
+	private int getUniqueId(ArrayList<TopicNetworkNode> node, String nodeLabel){
+		for(int i=0; i<node.size(); i++){
+			if(node.get(i).getLabel().equals(nodeLabel)){
+				return Integer.parseInt(node.get(i).getId());
+			}
+		}
+		return -1;
 	}
 
 	private int setTimeMode(Date startDate, Date endDate){
@@ -190,4 +217,6 @@ public class TopTopicDataServer extends ServerResource{
 		SimpleDateFormat onlyDate = new SimpleDateFormat("dd/MM/yyyy"); 
 		return onlyDate.format(d);
 	}
+
+
 }

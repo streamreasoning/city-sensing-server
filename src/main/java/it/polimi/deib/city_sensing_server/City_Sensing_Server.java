@@ -26,6 +26,7 @@ import it.polimi.deib.city_sensing_server.concept_network.ConceptNetDataServer;
 import it.polimi.deib.city_sensing_server.configuration.Config;
 import it.polimi.deib.city_sensing_server.dataSource.DataSourceSingleton;
 import it.polimi.deib.city_sensing_server.event.EventListDataServer;
+import it.polimi.deib.city_sensing_server.hashtag_heatmap.HashtagHeatmapDataServer;
 import it.polimi.deib.city_sensing_server.linked_venues.VenuesSADataServer;
 import it.polimi.deib.city_sensing_server.linked_venues.VenuesTopDataServer;
 import it.polimi.deib.city_sensing_server.map.MapDataServer;
@@ -33,6 +34,8 @@ import it.polimi.deib.city_sensing_server.most_contacted_chart.MostContactedChar
 import it.polimi.deib.city_sensing_server.side_panel.SidePanelDataServer;
 import it.polimi.deib.city_sensing_server.timeline.ContextTimelineDataServer;
 import it.polimi.deib.city_sensing_server.timeline.FocusTimelineDataServer;
+import it.polimi.deib.city_sensing_server.topic_heatmap.TopicHeatmapDataServer;
+import it.polimi.deib.city_sensing_server.topic_network.TopicNetworkDataServer;
 import it.polimi.deib.city_sensing_server.topvenue_hashtag.TopVenueHashtagDataServer;
 import it.polimi.deib.city_sensing_server.users.UsersSADataServer;
 import it.polimi.deib.city_sensing_server.users.UsersTopDataServer;
@@ -147,7 +150,9 @@ public class City_Sensing_Server extends Application {
 		router.attach("/" + version + "/venues/socialActivity",VenuesSADataServer.class);
 		router.attach("/" + version + "/top/venuesHahtag",TopVenueHashtagDataServer.class);
 		router.attach("/" + version + "/top/topic",TopTopicDataServer.class);
-
+		router.attach("/" + version + "/topicnetwork",TopicNetworkDataServer.class);
+		router.attach("/" + version + "/hashtagheatmap",HashtagHeatmapDataServer.class);
+		router.attach("/" + version + "/topicheatmap",TopicHeatmapDataServer.class);
 
 		return router;
 	}

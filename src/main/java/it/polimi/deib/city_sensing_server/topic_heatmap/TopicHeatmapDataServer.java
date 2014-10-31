@@ -1,34 +1,17 @@
-/*******************************************************************************
- * Copyright 2014 DEIB - Politecnico di Milano
- *    
- * Marco Balduini (marco.balduini@polimi.it)
- * Emanuele Della Valle (emanuele.dellavalle@polimi.it)
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *   http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
-package it.polimi.city_sensing_server.top_topic;
+package it.polimi.deib.city_sensing_server.topic_heatmap;
 
+import it.polimi.deib.city_sensing_server.topic_heatmap.Topic;
 import it.polimi.city_sensing_server.topic_utilities.Cluster;
 import it.polimi.city_sensing_server.topic_utilities.ClusterList;
+import it.polimi.city_sensing_server.topic_utilities.Logic;
 import it.polimi.city_sensing_server.topic_utilities.TopicLogic;
-import it.polimi.deib.city_sensing_server.concept_network.ConceptNetRequest;
 import it.polimi.deib.city_sensing_server.configuration.Config;
+import it.polimi.deib.city_sensing_server.hashtag_heatmap.Hashtag;
+import it.polimi.deib.city_sensing_server.topic_heatmap.HeatmapSlot;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -52,18 +35,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 
-
-public class TopTopicDataServer extends ServerResource{
-
-	private Logger logger = LoggerFactory.getLogger(TopTopicDataServer.class.getName());
-
-	private final double THRESHOLD_VAL = 5;
+public class TopicHeatmapDataServer extends ServerResource {
 	
-	private ClusterList clusterList;
-	private TopicLogic logic;
+private Logger logger = LoggerFactory.getLogger(TopicHeatmapDataServer.class.getName());
+	
+private final double THRESHOLD_VAL = 5;
 
-	private int DAYMODE = 0;
-	private int TIMEMODE;
+private ClusterList clusterList;
+private TopicLogic logic;
+
+private int DAYMODE = 0;
+private int TIMEMODE;	
 
 	@Post
 	public void dataServer(Representation rep) throws IOException {
@@ -71,7 +53,7 @@ public class TopTopicDataServer extends ServerResource{
 		Gson gson = new GsonBuilder().serializeNulls().serializeSpecialFloatingPointValues().create();
 		try {
 
-			logger.debug("Top topic request received");
+			logger.debug("Topic heatmap request received");
 			String parameters = rep.getText();
 			logger.debug("parameters: {}",parameters);
 
@@ -86,7 +68,7 @@ public class TopTopicDataServer extends ServerResource{
 
 			reader = new JsonReader(new StringReader(parameters));
 
-			TopTopicRequest cnReq = gson.fromJson(reader, TopTopicRequest.class);
+			TopicHeatmapRequest cnReq = gson.fromJson(reader, TopicHeatmapRequest.class);
 
 			ArrayList<Integer> cellList = new ArrayList<Integer>();
 
@@ -105,7 +87,12 @@ public class TopTopicDataServer extends ServerResource{
 					cellList.add(Integer.parseInt(s));
 				}
 			}
-
+			
+			TopicHeatmapResponse response = new TopicHeatmapResponse();
+			
+			DateFormat outFormat = new SimpleDateFormat("dd/MM"); 
+		
+			
 			clusterList = new ClusterList();
 			logic = new TopicLogic(clusterList);
 			int numDay = -1;
@@ -118,11 +105,23 @@ public class TopTopicDataServer extends ServerResource{
 			for(int i=0; i<clusters.length; i++){
 				Topic currentTopic = new Topic();
 				currentTopic.setLabel(clusters[i].getTagListAsString());
-				currentTopic.setValue(clusters[i].getRelevance());
+				currentTopic.setId(Integer.toString(i));
+				logic.buildAggregateCumulativePattern(clusters[i].getTagListAsString().split(","), logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getStart()))), logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getEnd()))), 0, 1, logic.dayDifference(logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getStart()))), logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getEnd())))) + 1, 5);
+				ArrayList<HeatmapSlot> data = new ArrayList<HeatmapSlot>();
+				for(int j=0; j<logic.getAggregatePatternLength(); j++){
+					String day = outFormat.format(logic.getDatePattern(j));
+					for(int k=0; k<logic.getAggregatePatternNumRow(); k++){
+						HeatmapSlot slot = new HeatmapSlot();
+						slot.setDate(day);
+						slot.setInterval(getTimeSlotLabel(k));
+						slot.setValue(Double.toString(logic.getAggregatePattern(j,k)));
+						data.add(slot);
+					}
+					currentTopic.setData(data);
+				}
 				topicList.add(currentTopic);
-				
 			}
-			TopTopicResponse response = new TopTopicResponse();
+
 			response.setTopics(topicList);
 			
 			String respString = gson.toJson(response);
@@ -135,7 +134,6 @@ public class TopTopicDataServer extends ServerResource{
 			this.release();
 			
 		} catch (Exception ex){
-			ex.printStackTrace();
 			logger.error(ex.getMessage(), ex);
 			String error = "Generic error";
 			rep.release();
@@ -146,10 +144,9 @@ public class TopTopicDataServer extends ServerResource{
 			this.release();
 		} finally {
 			rep.release();
-
 		}
 	}
-
+	
 	private int setTimeMode(Date startDate, Date endDate){
 		int dayDistance = logic.dayDifference(startDate, endDate);
 		if(dayDistance == 0){
@@ -182,6 +179,27 @@ public class TopTopicDataServer extends ServerResource{
 		}
 	}
 	
+	private String getTimeSlotLabel(int index){
+		switch(index) {
+		case 0: {
+			return "0-7";
+		}
+		case 1: {
+			return "7-11";
+		}
+		case 2: {
+			return "11-14";
+		}
+		case 3: {
+			return "14-19";
+		}
+		case 4: {
+			return "19-24";
+		}
+		}
+		return null;
+	}
+		
 	private String longToDate(long timeStamp) throws ParseException, DatatypeConfigurationException{
 		GregorianCalendar calendar = new GregorianCalendar();
 		calendar.setTimeInMillis(timeStamp);
@@ -190,4 +208,5 @@ public class TopTopicDataServer extends ServerResource{
 		SimpleDateFormat onlyDate = new SimpleDateFormat("dd/MM/yyyy"); 
 		return onlyDate.format(d);
 	}
+
 }
