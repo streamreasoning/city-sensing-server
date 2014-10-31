@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>eu.deib.polimi</groupId>
 	<artifactId>city_sensing_server</artifactId>
-	<version>0.5</version>
+	<version>0.6</version>
 	<packaging>jar</packaging>
 
 	<name>city_sensing_server</name>
@@ -15,6 +15,12 @@
 			<name>Public online Restlet repository</name>
 			<url>http://maven.restlet.org</url>
 		</repository>
+		<repository>
+			<id>streamreasoning_repository</id>
+			<name>streamreasoning repository</name>
+			<url>http://streamreasoning.org/maven/</url>
+			<layout>default</layout>
+		</repository>
 	</repositories>
 
 	<properties>
@@ -23,6 +29,16 @@
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>9.3-1102-jdbc41</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sourceforge</groupId>
+			<artifactId>javaml</artifactId>
+			<version>0.1.7</version>
+		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
@@ -98,7 +114,7 @@
 	</dependencies>
 
 	<build>
-		
+
 		<pluginManagement>
 			<plugins>
 				<!--This plugin's configuration is used to store Eclipse m2e settings 
