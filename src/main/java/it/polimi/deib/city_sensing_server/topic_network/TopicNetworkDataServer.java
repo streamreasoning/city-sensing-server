@@ -94,7 +94,17 @@ public class TopicNetworkDataServer extends ServerResource{
 			numDay = logic.dayDifference(logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getStart()))), logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getEnd()))));
 			logic.setParameters(setKParameter(logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getStart()))), logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getEnd())))), THRESHOLD_VAL);
 			logic.buildClusters(longToDate(Long.parseLong(cnReq.getStart())), longToDate(Long.parseLong(cnReq.getEnd())), DAYMODE, TIMEMODE, numDay, getNumTimeSlot(TIMEMODE));
-			Cluster[] clusters = clusterList.getClusterVector();
+			Cluster[] allClusters = clusterList.getClusterVector();
+			int dim = 0;
+			if(allClusters.length > 20){
+				dim = 20;
+			} else {
+				dim = allClusters.length;
+			}
+			Cluster[] clusters = new Cluster[dim];
+			for(int i=0; i<clusters.length; i++) {
+				clusters[i] = allClusters[i];
+			}
 			
 			ArrayList<TopicNetworkNode> topicNetNodes = new ArrayList<TopicNetworkNode>();
 			ArrayList<TopicNetworkLink> topicNetLinks = new ArrayList<TopicNetworkLink>();
@@ -122,7 +132,7 @@ public class TopicNetworkDataServer extends ServerResource{
 			
 			String[] tag;
 			ArrayList<String> tagList = new ArrayList<String>();
-			for(int i=0; i<clusterList.getNumClusters()+1; i++){
+			for(int i=0; i<clusterList.getNumClusters()+1 && i < 20; i++){
 				tagList.add(new String(clusterList.getClusterClass(i).getClusterCenter().getTag()));
 			}
 			m = new CooccourenceMatrix(tagList.size());
