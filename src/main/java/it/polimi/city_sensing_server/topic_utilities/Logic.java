@@ -25,9 +25,9 @@ public class Logic {
 	private static Logger logger = LoggerFactory.getLogger(Logic.class);
 	
 	
-	public static boolean isPureAscii(String v) {
+	/**public static boolean isPureAscii(String v) {
 		return asciiEncoder.canEncode(v);
-	}
+	}*/
 
 	public class patternElement {
 		private Date date;
@@ -130,17 +130,17 @@ public class Logic {
 
 	public String[] getTopHashtag(Date startDate, Date endDate) throws SQLException, ParseException {
 		ArrayList<String> topHashtag = new ArrayList<String>();
-		String query ="select h.tag from hashtag h join occorrenza o on h.pk_tag = o.tag join tweet t on o.tweet = t.pk_tweet where t.day >= ? and t.day <= ? group by h.tag order by count(*) desc";
+		String query ="select h.tag from hashtag h join occorrenza o on h.pk_tag = o.tag join tweet t on o.tweet = t.pk_tweet where t.day >= ? and t.day <= ? and h.tag ~ '[:ascii:]' group by h.tag order by count(*) desc";
 		PreparedStatement pstat = conn.prepareStatement(query);
 		pstat.setDate(1, parseUtilDate(startDate));
 		pstat.setDate(2, parseUtilDate(endDate));
 		ResultSet rs = pstat.executeQuery();
 		int count = 0;
 		while(rs.next() && count < 100) {
-			if(isPureAscii(rs.getString(1))){
+		//	if(isPureAscii(rs.getString(1))){
 				topHashtag.add(new String(rs.getString(1)));
 				count++;
-			}
+		//	}
 		}
 		return listToVector(topHashtag);
 	}

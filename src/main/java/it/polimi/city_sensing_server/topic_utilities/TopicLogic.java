@@ -38,9 +38,9 @@ public class TopicLogic extends Logic{
 	
 	private static Logger logger = LoggerFactory.getLogger(TopicLogic.class);
 	
-	public static boolean isPureAscii(String v) {
+	/**public static boolean isPureAscii(String v) {
 		return asciiEncoder.canEncode(v);
-	}
+	}*/
 	
 	public TopicLogic(ClusterList clusterList) throws ClassNotFoundException, SQLException {
 		super();
@@ -60,7 +60,7 @@ public class TopicLogic extends Logic{
 	public void buildClusters(String startDate, String endDate, int dayMode, int timeMode, int d1, int d2) throws SQLException, ParseException {		
 		clusterList.removeAll();
 		ArrayList<Cluster> clusterTable = new ArrayList<Cluster>();
-		String query ="select h.tag from hashtag h join occorrenza o on h.pk_tag = o.tag join tweet t on o.tweet = t.pk_tweet where t.day >= ? and t.day <= ? group by h.tag order by count(*) desc limit 100";
+		String query ="select h.tag from hashtag h join occorrenza o on h.pk_tag = o.tag join tweet t on o.tweet = t.pk_tweet where t.day >= ? and t.day <= ? and h.tag ~ '[:ascii:]' group by h.tag order by count(*) desc limit 100";
 		
 		Dataset d = new DefaultDataset();
 		PreparedStatement pstat = conn.prepareStatement(query);
@@ -68,12 +68,12 @@ public class TopicLogic extends Logic{
 		pstat.setDate(2, parseUtilDate(this.endDate = format.parse(endDate)));
 		ResultSet rs = pstat.executeQuery();
 		while(rs.next()) {
-			if(isPureAscii(rs.getString(1))){
+			//if(isPureAscii(rs.getString(1))){
 				buildAggregatePattern(rs.getString(1), format.parse(startDate), format.parse(endDate), dayMode, timeMode, d1, d2);
 				double[] v = buildAggregateVector();
 				Instance inst = new DenseInstance(v, rs.getString(1));
 				d.add(inst);
-			}
+			//}
 		}
 		CosineSimilarity c = new CosineSimilarity();
 		Clusterer km = new KMeans(num_cluster, NUM_ITER, c);

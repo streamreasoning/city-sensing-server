@@ -100,7 +100,19 @@ private int TIMEMODE;
 			numDay = logic.dayDifference(logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getStart()))), logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getEnd()))));
 			logic.setParameters(setKParameter(logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getStart()))), logic.getDateFormat().parse(longToDate(Long.parseLong(cnReq.getEnd())))), THRESHOLD_VAL);
 			logic.buildClusters(longToDate(Long.parseLong(cnReq.getStart())), longToDate(Long.parseLong(cnReq.getEnd())), DAYMODE, TIMEMODE, numDay, getNumTimeSlot(TIMEMODE));
-			Cluster[] clusters = clusterList.getClusterVector();
+			Cluster[] allClusters = clusterList.getClusterVector();
+			
+			int dim = 0;
+			if(allClusters.length > 20){
+				dim = 20;
+			} else {
+				dim = allClusters.length;
+			}
+			Cluster[] clusters = new Cluster[dim];
+			for(int i=0; i<clusters.length; i++) {
+				clusters[i] = allClusters[i];
+			}
+			
 			ArrayList<Topic> topicList = new ArrayList<Topic>();
 			for(int i=0; i<clusters.length; i++){
 				Topic currentTopic = new Topic();

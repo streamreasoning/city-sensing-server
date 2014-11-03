@@ -115,7 +115,7 @@ public class TopTopicDataServer extends ServerResource{
 			logic.buildClusters(longToDate(Long.parseLong(cnReq.getStart())), longToDate(Long.parseLong(cnReq.getEnd())), DAYMODE, TIMEMODE, numDay, getNumTimeSlot(TIMEMODE));
 			Cluster[] clusters = clusterList.getClusterVector();
 			ArrayList<Topic> topicList = new ArrayList<Topic>();
-			for(int i=0; i<clusters.length; i++){
+			for(int i=0; i<clusters.length && i < 20; i++){
 				Topic currentTopic = new Topic();
 				currentTopic.setLabel(clusters[i].getTagListAsString());
 				currentTopic.setValue(clusters[i].getRelevance());

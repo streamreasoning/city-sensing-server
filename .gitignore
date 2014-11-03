@@ -1,5 +1,14 @@
-*.project
-*.classpath
-*.DS_Store
 *.log
-/target
+*.jar
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Mac
+.DS_Store
+
+# Maven
+log/
+target/
