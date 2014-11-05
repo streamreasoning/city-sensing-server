@@ -161,6 +161,7 @@ public class TopicNetworkDataServer extends ServerResource{
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(respString, MediaType.APPLICATION_JSON);
 			this.getResponse().commit();
+			logic.closeConnection();
 			this.commit();	
 			this.release();
 			
