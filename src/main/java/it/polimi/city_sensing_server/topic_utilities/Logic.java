@@ -972,5 +972,9 @@ public class Logic {
 		}
 		return timeSlotLimit;
 	}
+	
+	public void closeConnection() throws SQLException {
+		conn.close();
+	}
 
 }

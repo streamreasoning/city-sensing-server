@@ -81,21 +81,7 @@ public class HashtagHeatmapDataServer extends ServerResource{
 			
 			Logic logic = new Logic();
 			HashtagHeatmapResponse response = new HashtagHeatmapResponse();
-			/**ArrayList<TimeSlotLabel> timeLabels = new ArrayList<TimeSlotLabel>();
-			int TIMEMODE = Integer.parseInt(cnReq.getTimeMode());
-			
-			int[] timeSlot = logic.getAllTimeSlotLimit(TIMEMODE);
-			for(int i=0; i<timeSlot.length; i = i+2){
-				TimeSlotLabel label = new TimeSlotLabel();
-				label.setStartHour(Integer.toString(timeSlot[i]));
-				label.setEndHour(Integer.toString(timeSlot[i+1]));
-				timeLabels.add(label);
-			}*/
-			
-//			response.setTimeLabels(timeLabels);
-			
 			DateFormat outFormat = new SimpleDateFormat("dd/MM"); 
-			//int [] dimensions = logic.setPatternDimension(0, TIMEMODE, longToDate(Long.parseLong(cnReq.getStart())), longToDate(Long.parseLong(cnReq.getEnd())));
 			
 			String[] topHashtag = logic.getTopHashtag(longToDateFormat(Long.parseLong(cnReq.getStart())), longToDateFormat(Long.parseLong(cnReq.getEnd())));
 			ArrayList<Hashtag> hashtags = new ArrayList<Hashtag>();
@@ -119,23 +105,7 @@ public class HashtagHeatmapDataServer extends ServerResource{
 				hashtags.add(hashtag);
 			}
 			
-			response.setHashtags(hashtags);
-			
-/**			ArrayList<HeatmapSlot> slots = new ArrayList<HeatmapSlot>();
-			for(int i=0; i<logic.getAggregatePatternLength(); i++) {
-				String data = outFormat.format(logic.getDatePattern(i));
-				for(int j=0; j<logic.getAggregatePatternNumRow(); j++) {
-					HeatmapSlot slot = new HeatmapSlot();
-					slot.setDate(data);
-					slot.setTimeSlot(Integer.toString(j));
-					slot.setValue(Double.toString(logic.getAggregatePattern(i,j)));
-					slots.add(slot);
-				}
-			}
-			
-			response.setTimeSlots(slots);
-	*/		
-			
+			response.setHashtags(hashtags);	
 			
 			String respString = gson.toJson(response);
 			
@@ -143,6 +113,7 @@ public class HashtagHeatmapDataServer extends ServerResource{
 			this.getResponse().setStatus(Status.SUCCESS_CREATED);
 			this.getResponse().setEntity(respString, MediaType.APPLICATION_JSON);
 			this.getResponse().commit();
+			logic.closeConnection();
 			this.commit();	
 			this.release();
 			
